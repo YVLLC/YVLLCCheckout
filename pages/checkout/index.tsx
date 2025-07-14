@@ -4,19 +4,26 @@ import CheckoutForm from "../../components/CheckoutForm";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
-// Your Stripe publishable key (replace with your own!)
+// Stripe publishable key
 const stripePromise = loadStripe("pk_live_51Rgpc4Dtq312KvGPUkyCKLxH4ZdPWeJlmBAnMrSlAl5BHF8Wu8qFW6hqxKlo3l7F87X3qmvVnmDrZYcP3FSSTPVN00fygC8Pfl");
+
+function getOrderFromURL() {
+  if (typeof window === "undefined") return null;
+  const params = new URLSearchParams(window.location.search);
+  const orderString = params.get("order");
+  if (!orderString) return null;
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(orderString))));
+  } catch {
+    return null;
+  }
+}
 
 export default function CheckoutPage() {
   const [order, setOrder] = useState<any>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const orderData = window.sessionStorage.getItem("yesviral_order");
-      if (orderData) {
-        setOrder(JSON.parse(orderData));
-      }
-    }
+    setOrder(getOrderFromURL());
   }, []);
 
   if (!order) {
