@@ -2,18 +2,7 @@ import { useState } from "react";
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import PaymentButton from "./PaymentButton";
 
-type CheckoutFormProps = {
-  order: {
-    product: string;
-    option: string;
-    amount: number;
-    reference: string;
-    price: number;
-    total: number;
-  };
-};
-
-export default function CheckoutForm({ order }: CheckoutFormProps) {
+export default function CheckoutForm({ order }: { order: any }) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -25,16 +14,15 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
     setLoading(true);
 
     try {
-      // 1. Create payment intent on your backend (pass only the amount!)
+      // Call your payment intent API
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: Math.round(order.total * 100) }), // Stripe expects cents
+        body: JSON.stringify({ amount: Math.round(order.total * 100) }),
       });
       const { clientSecret, error: serverError } = await res.json();
       if (serverError || !clientSecret) throw new Error(serverError || "Payment failed.");
 
-      // 2. Confirm payment with Stripe Elements
       if (!stripe || !elements) throw new Error("Stripe not loaded");
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
@@ -43,14 +31,7 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
       });
       if (stripeError) throw new Error(stripeError.message);
 
-      // 3. (Optional) Create JAP order on your server after payment (never from browser)
-      // await fetch("/api/jap_order", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ ...order, paymentId: paymentIntent.id }),
-      // });
-
-      // 4. Redirect to success page
+      // Redirect or handle post-payment success
       window.location.href = "/checkout/success";
     } catch (e: any) {
       setError(e.message || "An error occurred.");
