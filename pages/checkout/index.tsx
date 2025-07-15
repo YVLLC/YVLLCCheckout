@@ -39,7 +39,7 @@ export default function CheckoutPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(118deg, #f7fafd 0%, #eaf4ff 100%)"
+          background: "linear-gradient(118deg, #f7fafd 0%, #eaf4ff 100%)",
         }}
       >
         Please start your order from the main site.
@@ -48,74 +48,111 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="checkout-root">
-      <div className="checkout-hero">
-        <svg width={36} height={36} viewBox="0 0 38 38" fill="none" style={{marginRight: 10}}>
-          <circle cx="19" cy="19" r="19" fill="#2176FF"/>
-          <path d="M25.5 14.5L17 23L12.5 18.5" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-        <h1 className="checkout-title">Secure Checkout</h1>
+    <div className="yv-checkout-root">
+      <div className="yv-checkout-hero">
+        {/* Swap SVG for logo */}
+        <img
+          src="/logo-checkout.png"
+          alt="YesViral Logo"
+          className="yv-logo"
+          width={54}
+          height={54}
+          style={{
+            marginRight: 18,
+            borderRadius: 14,
+            boxShadow: "0 2px 18px #007BFF22, 0 1px 4px #2176ff18",
+            background: "linear-gradient(120deg, #E6F0FF 30%, #fff 100%)",
+          }}
+        />
+        <div>
+          <h1 className="yv-checkout-title">Checkout</h1>
+          <div className="yv-checkout-subtitle">Encrypted &amp; Secure</div>
+        </div>
       </div>
-      <div className="checkout-card">
+      <div className="yv-checkout-card">
         <OrderSummary order={order} />
         <Elements stripe={stripePromise}>
           <CheckoutForm order={order} />
         </Elements>
       </div>
-      <div className="checkout-footer">
-        <span>All transactions are encrypted and processed securely.</span>
+      <div className="yv-checkout-footer">
+        <span>
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="#22C55E" style={{marginRight: 6, verticalAlign: "middle"}}><circle cx="10" cy="10" r="10" /><path d="M14.5 7.5L9 13l-2.5-2.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Payments protected by 256-bit SSL • Instant order confirmation
+        </span>
       </div>
       <style jsx global>{`
-        .checkout-root {
+        .yv-checkout-root {
           display: flex;
           flex-direction: column;
           align-items: center;
           min-height: 100vh;
-          background: linear-gradient(118deg, #f7fafd 0%, #eaf4ff 100%);
-          padding: 48px 0 36px;
+          background: linear-gradient(117deg, #E6F0FF 0%, #FFFFFF 100%);
+          padding: 54px 0 38px;
         }
-        .checkout-hero {
+        .yv-checkout-hero {
           display: flex;
           align-items: center;
-          margin-bottom: 2.6rem;
+          margin-bottom: 2.2rem;
+          gap: 0.8em;
         }
-        .checkout-title {
-          font-size: 2.2rem;
+        .yv-logo {
+          width: 54px;
+          height: 54px;
+          object-fit: contain;
+          background: #E6F0FF;
+        }
+        .yv-checkout-title {
+          font-size: 2.25rem;
           font-weight: 900;
           letter-spacing: -0.03em;
-          color: #2176FF;
-          margin: 0;
+          color: #007BFF;
+          margin: 0 0 0.15em 0;
+          line-height: 1.07;
         }
-        .checkout-card {
+        .yv-checkout-subtitle {
+          color: #22C55E;
+          font-size: 1.03rem;
+          font-weight: 700;
+        }
+        .yv-checkout-card {
           background: #fff;
-          border-radius: 24px;
-          max-width: 470px;
+          border-radius: 25px;
+          max-width: 480px;
           width: 100%;
-          box-shadow: 0 8px 34px 0 #2176ff18;
-          padding: 2.7rem 2.1rem 2.5rem 2.1rem;
-          margin-bottom: 2.1rem;
-          transition: box-shadow 0.18s;
+          box-shadow: 0 12px 48px 0 #007bff16, 0 2px 12px 0 #22c55e0d;
+          padding: 2.8rem 2rem 2.6rem 2rem;
+          margin-bottom: 2.2rem;
+          transition: box-shadow 0.22s;
+          border: 1.5px solid #CFE4FF;
         }
-        .checkout-card:hover {
-          box-shadow: 0 14px 44px 0 #2176ff23;
+        .yv-checkout-card:hover {
+          box-shadow: 0 18px 60px 0 #007bff28, 0 4px 22px 0 #22c55e11;
         }
-        .checkout-footer {
-          color: #96a8be;
-          font-size: 14px;
-          margin-top: 8px;
-          font-weight: 500;
+        .yv-checkout-footer {
+          color: #22C55E;
+          font-size: 15px;
+          margin-top: 4px;
+          font-weight: 700;
           text-align: center;
+          letter-spacing: 0.01em;
+          display: flex;
+          justify-content: center;
         }
-        @media (max-width: 600px) {
-          .checkout-root {
-            padding: 20px 0 16px;
+        @media (max-width: 700px) {
+          .yv-checkout-root {
+            padding: 18px 0 12px;
           }
-          .checkout-title {
-            font-size: 1.35rem;
+          .yv-checkout-title {
+            font-size: 1.25rem;
           }
-          .checkout-card {
-            padding: 1.1rem 0.5rem 1.4rem 0.5rem;
-            max-width: 99vw;
+          .yv-checkout-card {
+            padding: 1.1rem 0.5rem 1.3rem 0.5rem;
+            max-width: 100vw;
+          }
+          .yv-logo {
+            width: 40px;
+            height: 40px;
           }
         }
       `}</style>

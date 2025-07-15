@@ -77,7 +77,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          terms of service
+          Terms of Service
         </a>{" "}
         and{" "}
         <a
@@ -85,7 +85,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          privacy policy
+          Privacy Policy
         </a>
         .
       </div>
