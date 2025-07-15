@@ -68,7 +68,7 @@ export default function CheckoutPage() {
         </Elements>
         <div className="ys-trustbar">
           <CheckCircle size={18} color="#22C55E" />
-          Money-Back Guarantee &nbsp;•&nbsp; 24/7 Priority Support
+          30-Day Refill Guarantee &nbsp;•&nbsp; 24/7 Priority Support
         </div>
       </div>
       <style jsx global>{`

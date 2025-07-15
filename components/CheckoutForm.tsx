@@ -43,7 +43,7 @@ export default function CheckoutForm({ order }: { order: any }) {
     <form onSubmit={handleSubmit} className="yv-checkout-form">
       <div className="yv-section">
         <label className="yv-label" htmlFor="card-element">
-          Pay with card
+          Pay with credit/debit card
         </label>
         <div className="yv-card-element-wrap" id="card-element">
           <CardElement
