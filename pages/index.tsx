@@ -9,49 +9,72 @@ export default function Home() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        padding: "20px",
         fontFamily: "Inter, Segoe UI, Arial, sans-serif",
       }}
     >
       <div
         style={{
-          maxWidth: 440,
+          maxWidth: 480,
           width: "100%",
           textAlign: "center",
           borderRadius: 22,
-          boxShadow: "0 8px 32px 0 #007BFF14",
           background: "#fff",
           border: "1.5px solid #CFE4FF",
-          padding: "54px 32px 38px",
+          padding: "54px 32px 42px",
+          boxShadow: "0 8px 32px 0 #007BFF14",
         }}
       >
         <h1
           style={{
-            fontSize: 36,
-            marginBottom: 12,
+            fontSize: 34,
+            marginBottom: 10,
             fontWeight: 900,
             letterSpacing: "-0.035em",
             color: "#007BFF",
           }}
         >
-          Checkout Services Portal
+          Creator Tools Hub
         </h1>
-        <p style={{ color: "#444444", marginBottom: 24, fontSize: 18, lineHeight: 1.6, fontWeight: 500 }}>
-          Seamless, secure, and fast digital order processing for all your online needs.
+
+        <p
+          style={{
+            color: "#555",
+            marginBottom: 26,
+            fontSize: 18,
+            lineHeight: 1.6,
+            fontWeight: 500,
+          }}
+        >
+          A central place for creators to manage digital utilities, resources,
+          and premium service tools — all in one simplified portal.
         </p>
-        <ul style={{
-          margin: "0 0 32px",
-          padding: 0,
-          listStyle: "none",
-          fontSize: 16,
-          color: "#444444",
-          textAlign: "left",
-          fontWeight: 500,
-        }}>
-          <li style={{marginBottom: 10, display: "flex", alignItems: "center"}}>🚀 Fast, reliable order fulfillment</li>
-          <li style={{marginBottom: 10, display: "flex", alignItems: "center"}}>🔒 Secure payment processing</li>
-          <li style={{marginBottom: 10, display: "flex", alignItems: "center"}}>💡 Solutions for every business</li>
-          <li style={{marginBottom: 10, display: "flex", alignItems: "center"}}>💬 24/7 support team</li>
+
+        <ul
+          style={{
+            margin: "0 0 32px",
+            padding: 0,
+            listStyle: "none",
+            textAlign: "left",
+            fontSize: 16,
+            color: "#444",
+            fontWeight: 500,
+          }}
+        >
+          <li style={{ marginBottom: 10, display: "flex", alignItems: "center" }}>
+            🧩 Access creator utilities and workflow tools
+          </li>
+          <li style={{ marginBottom: 10, display: "flex", alignItems: "center" }}>
+            🎛️ Manage your digital resources in one place
+          </li>
+          <li style={{ marginBottom: 10, display: "flex", alignItems: "center" }}>
+            ☑️ Premium add-ons available for advanced features
+          </li>
+          <li style={{ marginBottom: 10, display: "flex", alignItems: "center" }}>
+            📘 Simple, clean interface built for professionals
+          </li>
         </ul>
+
         <Link href="/checkout">
           <button
             style={{
@@ -62,17 +85,17 @@ export default function Home() {
               background: "linear-gradient(90deg,#007BFF 30%,#005FCC 100%)",
               color: "#fff",
               border: "none",
-              boxShadow: "0 4px 20px 0 #007BFF22",
               cursor: "pointer",
+              boxShadow: "0 4px 20px 0 #007BFF22",
               transition: "background 0.22s",
-              outline: "none",
             }}
           >
-            Start Secure Checkout
+            Open Tools Panel
           </button>
         </Link>
-        <div style={{marginTop: 34, fontSize: 13.5, color: "#888888"}}>
-          <span>Trusted digital checkout experience</span>
+
+        <div style={{ marginTop: 34, fontSize: 13.5, color: "#888" }}>
+          Optimized for creators, freelancers & digital brands.
         </div>
       </div>
     </div>
