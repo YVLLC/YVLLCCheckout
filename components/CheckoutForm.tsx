@@ -19,7 +19,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           platform: order.platform,
           service: order.service,
           quantity: order.amount,
-          Username / Link: order.reference,
+          reference: order.reference,
         })
       );
 

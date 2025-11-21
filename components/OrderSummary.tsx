@@ -31,7 +31,7 @@ export default function OrderSummary({ order }: { order: any }) {
           <span>{amount}</span>
         </div>
         <div>
-          <span className="ys-label">Reference</span>
+          <span className="ys-label">Username / Link</span>
           <span>{reference}</span>
         </div>
       </div>
