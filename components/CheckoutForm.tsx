@@ -1,6 +1,8 @@
 import { useState } from "react";
 import {
-  CardElement,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
@@ -15,6 +17,25 @@ type CheckoutFormProps = {
     package?: string;
     type?: string;
   };
+};
+
+const cardStyle = {
+  style: {
+    base: {
+      fontSize: "16px",
+      fontWeight: 500,
+      color: "#111827",
+      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
+      "::placeholder": {
+        color: "#9CA3AF",
+      },
+      iconColor: "#007BFF",
+    },
+    invalid: {
+      color: "#EF4444",
+      iconColor: "#EF4444",
+    },
+  },
 };
 
 export default function CheckoutForm({ order }: CheckoutFormProps) {
@@ -54,14 +75,16 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
         throw new Error(serverError || "Unable to create payment.");
       }
 
-      const cardElement = elements?.getElement(CardElement);
-      if (!stripe || !elements || !cardElement) {
+      const cardNumberElement = elements?.getElement(CardNumberElement);
+      if (!stripe || !elements || !cardNumberElement) {
         throw new Error("Stripe is not ready yet. Try again.");
       }
 
       const { error: stripeError } = await stripe.confirmCardPayment(
         clientSecret,
-        { payment_method: { card: cardElement } }
+        {
+          payment_method: { card: cardNumberElement },
+        }
       );
 
       if (stripeError) throw new Error(stripeError.message || "Payment failed.");
@@ -90,7 +113,7 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
         animate-fadeIn
       "
     >
-      {/* TOP CARD PREVIEW */}
+      {/* TOP GLASS SUMMARY CARD */}
       <div
         className="
           w-full rounded-2xl
@@ -102,10 +125,10 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
         "
       >
         <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
-            YesViral • Secure Delivery
+          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-white/70">
+            YesViral • Secure Checkout
           </span>
-          <span className="text-[11px] font-semibold bg-white/15 px-2 py-1 rounded-full border border-white/20">
+          <span className="text-[11px] font-semibold bg-white/15 px-2 py-1 rounded-full border border-white/25">
             256-bit SSL
           </span>
         </div>
@@ -135,7 +158,7 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
         </div>
       </div>
 
-      {/* ORDER SUMMARY INSIDE FORM */}
+      {/* ORDER SUMMARY */}
       <div
         className="
           w-full rounded-2xl
@@ -145,26 +168,9 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
           space-y-3
         "
       >
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-semibold text-[#005FCC]">Package</span>
-          <span className="font-semibold text-[#111] text-right">
-            {pkg}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-semibold text-[#6B7A90]">Type</span>
-          <span className="font-semibold text-[#111] text-right">
-            {type}
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-semibold text-[#6B7A90]">Username / Link</span>
-          <span className="font-semibold text-[#111] text-right max-w-[60%] truncate">
-            {order.reference}
-          </span>
-        </div>
+        <SummaryRow label="Package" value={pkg} />
+        <SummaryRow label="Type" value={type} />
+        <SummaryRow label="Username / Link" value={order.reference} />
 
         <div className="flex items-center justify-between text-base pt-2 border-t border-[#E1EDFF] mt-1">
           <span className="font-semibold text-[#111]">Total</span>
@@ -174,7 +180,7 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
         </div>
       </div>
 
-      {/* PAYMENT SECTION */}
+      {/* PAYMENT SECTION WITH 3 STRIPE ELEMENTS */}
       <div
         className="
           w-full
@@ -183,7 +189,7 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
           border border-[#DDE8FF]
           p-5 sm:p-6
           shadow-[0_12px_38px_rgba(0,123,255,0.12)]
-          space-y-4
+          space-y-5
         "
       >
         <div className="flex items-center justify-between">
@@ -197,46 +203,67 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
           </div>
         </div>
 
-        <div
-          className="
-            w-full
-            bg-white
-            border border-[#CFE4FF]
-            rounded-xl
-            px-4 py-4
-            shadow-inner
-            focus-within:border-[#007BFF]
-            focus-within:ring-4
-            focus-within:ring-[#E5F0FF]
-            transition-all
-          "
-        >
-          <CardElement
-            options={{
-              hidePostalCode: true,
-              style: {
-                base: {
-                  fontSize: "17px",
-                  fontWeight: 500,
-                  color: "#111",
-                  fontSmoothing: "antialiased",
-                  "::placeholder": {
-                    color: "#9CB4D8",
-                  },
-                  iconColor: "#007BFF",
-                },
-                invalid: {
-                  color: "#EF4444",
-                  iconColor: "#EF4444",
-                },
-              },
-            }}
-          />
+        {/* Card Number */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
+            Card Number
+          </label>
+          <div
+            className="
+              w-full bg-white border border-[#CFE4FF]
+              rounded-xl px-4 py-3
+              shadow-inner
+              focus-within:border-[#007BFF]
+              focus-within:ring-4 focus-within:ring-[#E5F0FF]
+              transition-all
+            "
+          >
+            <CardNumberElement options={cardStyle} />
+          </div>
+        </div>
+
+        {/* Expiry + CVC Row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
+              Expiration
+            </label>
+            <div
+              className="
+                w-full bg-white border border-[#CFE4FF]
+                rounded-xl px-4 py-3
+                shadow-inner
+                focus-within:border-[#007BFF]
+                focus-within:ring-4 focus-within:ring-[#E5F0FF]
+                transition-all
+              "
+            >
+              <CardExpiryElement options={cardStyle} />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">
+              CVC
+            </label>
+            <div
+              className="
+                w-full bg-white border border-[#CFE4FF]
+                rounded-xl px-4 py-3
+                shadow-inner
+                focus-within:border-[#007BFF]
+                focus-within:ring-4 focus-within:ring-[#E5F0FF]
+                transition-all
+              "
+            >
+              <CardCvcElement options={cardStyle} />
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 text-[11px] text-[#6B7280]">
           <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E] shadow-[0_0_6px_#22C55E]" />
-          <span>Secured by Stripe • Card details never touch YesViral servers</span>
+          <span>Secured by Stripe • Card details never touch YesViral servers.</span>
         </div>
       </div>
 
@@ -266,10 +293,20 @@ export default function CheckoutForm({ order }: CheckoutFormProps) {
         {loading ? "Processing..." : "Complete Secure Payment"}
       </button>
 
-      {/* TINY FOOTER TEXT */}
       <p className="text-[11px] text-center text-[#6B7280]">
         By completing this purchase, you agree to YesViral&apos;s Terms & Refund Policy.
       </p>
     </form>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: any }) {
+  return (
+    <div className="flex items-center justify-between text-sm">
+      <span className="text-[#6B7A90] font-medium">{label}</span>
+      <span className="text-[#111827] font-semibold text-right max-w-[60%] truncate">
+        {value}
+      </span>
+    </div>
   );
 }
