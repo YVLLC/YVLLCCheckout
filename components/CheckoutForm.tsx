@@ -23,7 +23,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-      const res = await fetch("/api/payment_intent", {
+const res = await fetch("https://yesviral.com/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
