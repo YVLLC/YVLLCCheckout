@@ -1,5 +1,9 @@
 import { useState } from "react";
-import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  CardElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
 import PaymentButton from "./PaymentButton";
 
 export default function CheckoutForm({ order }: { order: any }) {
@@ -14,7 +18,7 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(true);
 
     try {
-      if (!order) throw new Error("Missing order details.");
+      if (!order) throw new Error("Order data missing.");
 
       const encodedMeta = btoa(
         JSON.stringify({
@@ -25,35 +29,33 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-      // ⭐ CALL THE LOCAL CHECKOUT API (NO CORS) ⭐
+      // ⭐ USE LOCAL API TO AVOID CORS
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: Math.round(order.total * 100), // stripe expects cents
+          amount: Math.round(order.total * 100),
           metadata: { order: encodedMeta },
         }),
       });
 
       if (!res.ok) {
         const txt = await res.text();
-        console.error("Internal server error:", txt);
-        throw new Error("Server error creating payment.");
+        console.error("Server error:", txt);
+        throw new Error("Failed to create payment. Try again.");
       }
 
       const { clientSecret, error: serverError } = await res.json();
+
       if (serverError || !clientSecret) {
-        throw new Error(serverError || "Payment failed.");
+        throw new Error(serverError || "Unable to process payment.");
       }
 
-      if (!stripe || !elements) {
-        throw new Error("Stripe not loaded.");
-      }
+      if (!stripe || !elements)
+        throw new Error("Stripe not initialized.");
 
       const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        throw new Error("Card input field not found.");
-      }
+      if (!cardElement) throw new Error("Card input not found.");
 
       const { error: stripeError } = await stripe.confirmCardPayment(
         clientSecret,
@@ -69,30 +71,77 @@ export default function CheckoutForm({ order }: { order: any }) {
       window.location.href = "/checkout/success";
     } catch (e: any) {
       console.error("Checkout error:", e);
-      setError(e.message || "An unexpected error occurred.");
+      setError(e.message || "Unexpected error.");
     }
 
     setLoading(false);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="yv-checkout-form space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="
+        w-full 
+        max-w-xl 
+        mx-auto 
+        flex 
+        flex-col 
+        gap-6 
+        px-4 
+        sm:px-6 
+        md:px-0
+      "
+    >
 
-      {/* CARD INPUT */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-        <label className="block text-sm font-semibold mb-2 text-gray-700">
-          Card Details
+      {/* CARD ELEMENT BLOCK */}
+      <div
+        className="
+          w-full 
+          bg-white 
+          rounded-2xl 
+          border 
+          border-[#DCE8FF] 
+          shadow-[0_4px_18px_rgba(0,0,0,0.05)] 
+          p-5 
+          space-y-3
+        "
+      >
+        <label
+          className="
+            block 
+            text-sm 
+            font-semibold 
+            text-[#0B63E6] 
+            tracking-tight
+          "
+        >
+          Card Information
         </label>
 
-        <div className="p-3 border rounded-lg bg-white">
+        <div
+          className="
+            border 
+            border-[#CFE4FF] 
+            rounded-xl 
+            bg-[#F9FBFF] 
+            px-4 
+            py-3
+            shadow-inner 
+            transition 
+            focus-within:border-[#007BFF]
+            focus-within:ring-2
+            focus-within:ring-[#E6F0FF]
+          "
+        >
           <CardElement
             options={{
               hidePostalCode: true,
               style: {
                 base: {
-                  fontSize: "16px",
+                  fontSize: "17px",
+                  fontWeight: "500",
                   color: "#111",
-                  "::placeholder": { color: "#888" },
+                  "::placeholder": { color: "#9BB3DA" },
                 },
                 invalid: {
                   color: "#EF4444",
@@ -101,16 +150,23 @@ export default function CheckoutForm({ order }: { order: any }) {
             }}
           />
         </div>
+
+        <div className="flex items-center gap-2 mt-1">
+          <span className="w-2 h-2 bg-[#22C55E] rounded-full"></span>
+          <span className="text-[11px] text-[#6B7280]">
+            256-bit encrypted • Secured by Stripe
+          </span>
+        </div>
       </div>
 
       {/* ERROR MESSAGE */}
       {error && (
-        <p className="text-red-500 text-sm font-medium text-center">
+        <div className="text-red-500 text-sm text-center font-medium px-2">
           {error}
-        </p>
+        </div>
       )}
 
-      {/* PAY BUTTON */}
+      {/* PAYMENT BUTTON */}
       <PaymentButton loading={loading} />
     </form>
   );
