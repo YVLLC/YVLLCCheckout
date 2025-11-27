@@ -9,14 +9,13 @@ const stripePromise = loadStripe(
   "pk_test_51Rgpc4Dtq312KvGPUkyCKLxH4ZdPWeJlmBAnMrSlAl5BHF8Wu8qFW6hqxKlo3l7F87X3qmvVnmDrZYcP3FSSTPVN00fygC8Pfl"
 );
 
-// Read encoded order from URL:
 function getOrderFromURL() {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
-  const raw = params.get("order");
-  if (!raw) return null;
+  const orderString = params.get("order");
+  if (!orderString) return null;
   try {
-    return JSON.parse(decodeURIComponent(escape(atob(raw))));
+    return JSON.parse(decodeURIComponent(escape(atob(orderString))));
   } catch {
     return null;
   }
@@ -64,15 +63,12 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* ORDER SUMMARY */}
         <OrderSummary order={order} />
 
-        {/* STRIPE ELEMENTS & CHECKOUT FORM */}
         <Elements stripe={stripePromise}>
           <CheckoutForm order={order} />
         </Elements>
 
-        {/* TRUST BAR */}
         <div className="flex items-center justify-center gap-2 text-[#0A6DD9] text-sm font-semibold mt-3">
           <CheckCircle size={16} className="text-[#22C55E]" />
           30-Day Refill Guarantee • 24/7 Priority Support
