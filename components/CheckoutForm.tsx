@@ -5,7 +5,19 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-export default function CheckoutForm({ order }: { order: any }) {
+type CheckoutFormProps = {
+  order: {
+    platform: string;
+    service: string;
+    amount: number;
+    reference: string;
+    total: number;
+    package?: string;
+    type?: string;
+  };
+};
+
+export default function CheckoutForm({ order }: CheckoutFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -17,6 +29,8 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(true);
 
     try {
+      if (!order) throw new Error("Missing order details.");
+
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
@@ -36,73 +50,164 @@ export default function CheckoutForm({ order }: { order: any }) {
       });
 
       const { clientSecret, error: serverError } = await res.json();
-      if (serverError || !clientSecret) throw new Error(serverError || "Payment failed.");
+      if (serverError || !clientSecret) {
+        throw new Error(serverError || "Unable to create payment.");
+      }
 
       const cardElement = elements?.getElement(CardElement);
-      if (!stripe || !elements || !cardElement)
-        throw new Error("Stripe failed to load.");
+      if (!stripe || !elements || !cardElement) {
+        throw new Error("Stripe is not ready yet. Try again.");
+      }
 
-      const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: cardElement },
-      });
+      const { error: stripeError } = await stripe.confirmCardPayment(
+        clientSecret,
+        { payment_method: { card: cardElement } }
+      );
 
-      if (stripeError) throw new Error(stripeError.message);
+      if (stripeError) throw new Error(stripeError.message || "Payment failed.");
 
       window.location.href = "/checkout/success";
-    } catch (e: any) {
-      setError(e.message || "Payment error.");
+    } catch (err: any) {
+      setError(err.message || "Unexpected error. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
+
+  const pkg = order.package || `${order.service} Package`;
+  const type = order.type || "High-Quality";
 
   return (
     <form
       onSubmit={handleSubmit}
       className="
-        w-full max-w-lg mx-auto flex flex-col gap-8
-        bg-white/80 backdrop-blur-xl rounded-3xl
-        p-7 border border-[#DCE8FF]
-        shadow-[0_20px_80px_rgba(0,123,255,0.12)]
+        w-full max-w-xl mx-auto
+        bg-white/80 backdrop-blur-xl
+        rounded-3xl border border-[#CFE4FF]
+        shadow-[0_24px_90px_rgba(0,123,255,0.18)]
+        p-6 sm:p-8
+        flex flex-col gap-8
+        animate-fadeIn
       "
     >
+      {/* TOP CARD PREVIEW */}
+      <div
+        className="
+          w-full rounded-2xl
+          bg-gradient-to-br from-[#007BFF] via-[#005FCC] to-[#001B4F]
+          text-white
+          p-5 sm:p-6
+          shadow-[0_18px_55px_rgba(0,91,191,0.8)]
+          flex flex-col gap-4
+        "
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
+            YesViral • Secure Delivery
+          </span>
+          <span className="text-[11px] font-semibold bg-white/15 px-2 py-1 rounded-full border border-white/20">
+            256-bit SSL
+          </span>
+        </div>
 
-      {/* ORDER SUMMARY */}
-      <div className="space-y-3">
-        <h3 className="text-xl font-bold text-[#007BFF]">
-          Order Summary
-        </h3>
+        <div className="mt-1">
+          <div className="text-[11px] text-white/60 mb-1">
+            Estimated Charge
+          </div>
+          <div className="text-2xl sm:text-3xl font-black tracking-tight">
+            ${order.total.toFixed(2)}
+          </div>
+        </div>
 
-        <SummaryRow label="Package" value={order.package || order.service} />
-        <SummaryRow label="Platform" value={order.platform} />
-        <SummaryRow label="Amount" value={order.amount.toLocaleString()} />
-        <SummaryRow label="Username / Link" value={order.reference} />
-
-        <div className="flex justify-between text-lg font-black border-t pt-3 border-[#E4EEFF]">
-          <span>Total</span>
-          <span className="text-[#007BFF]">${order.total.toFixed(2)}</span>
+        <div className="flex items-end justify-between mt-3 text-[11px] sm:text-xs">
+          <div className="space-y-0.5">
+            <div className="uppercase text-white/60">Platform</div>
+            <div className="font-semibold">
+              {order.platform} • {order.service}
+            </div>
+          </div>
+          <div className="space-y-0.5 text-right">
+            <div className="uppercase text-white/60">Quantity</div>
+            <div className="font-semibold">
+              {order.amount.toLocaleString()}
+            </div>
+          </div>
         </div>
       </div>
 
-
-      {/* CARD ELEMENT */}
+      {/* ORDER SUMMARY INSIDE FORM */}
       <div
         className="
-          bg-[#F9FBFF] border border-[#CFE4FF]
-          rounded-2xl p-5 space-y-3
-          shadow-[0_3px_12px_rgba(0,123,255,0.07)]
+          w-full rounded-2xl
+          bg-[#F5FAFF]
+          border border-[#DCEBFF]
+          p-4 sm:p-5
+          space-y-3
         "
       >
-        <label className="text-sm font-bold text-[#005FCC] uppercase">
-          Card Information
-        </label>
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-semibold text-[#005FCC]">Package</span>
+          <span className="font-semibold text-[#111] text-right">
+            {pkg}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-semibold text-[#6B7A90]">Type</span>
+          <span className="font-semibold text-[#111] text-right">
+            {type}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-semibold text-[#6B7A90]">Username / Link</span>
+          <span className="font-semibold text-[#111] text-right max-w-[60%] truncate">
+            {order.reference}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-base pt-2 border-t border-[#E1EDFF] mt-1">
+          <span className="font-semibold text-[#111]">Total</span>
+          <span className="text-xl font-black text-[#007BFF]">
+            ${order.total.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      {/* PAYMENT SECTION */}
+      <div
+        className="
+          w-full
+          rounded-2xl
+          bg-gradient-to-br from-[#F6FAFF] to-white
+          border border-[#DDE8FF]
+          p-5 sm:p-6
+          shadow-[0_12px_38px_rgba(0,123,255,0.12)]
+          space-y-4
+        "
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-[#005FCC] uppercase tracking-wide">
+            Card Information
+          </span>
+          <div className="flex items-center gap-1.5 opacity-80">
+            <span className="h-5 w-8 rounded-[6px] bg-[#1A1F71]" />
+            <span className="h-5 w-8 rounded-[6px] bg-[#FF5F00]" />
+            <span className="h-5 w-8 rounded-[6px] bg-black" />
+          </div>
+        </div>
 
         <div
           className="
-            bg-white border border-[#CFE4FF] rounded-xl
-            px-4 py-4 shadow-inner
+            w-full
+            bg-white
+            border border-[#CFE4FF]
+            rounded-xl
+            px-4 py-4
+            shadow-inner
             focus-within:border-[#007BFF]
-            focus-within:ring-4 focus-within:ring-[#E6F0FF]
+            focus-within:ring-4
+            focus-within:ring-[#E5F0FF]
             transition-all
           "
         >
@@ -111,51 +216,60 @@ export default function CheckoutForm({ order }: { order: any }) {
               hidePostalCode: true,
               style: {
                 base: {
-                  fontSize: "18px",
-                  fontWeight: "600",
+                  fontSize: "17px",
+                  fontWeight: 500,
                   color: "#111",
-                  "::placeholder": { color: "#A6B9D9" },
+                  fontSmoothing: "antialiased",
+                  "::placeholder": {
+                    color: "#9CB4D8",
+                  },
+                  iconColor: "#007BFF",
                 },
-                invalid: { color: "#EF4444" },
+                invalid: {
+                  color: "#EF4444",
+                  iconColor: "#EF4444",
+                },
               },
             }}
           />
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-[#6B7280]">
-          <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_6px_#22C55E]" />
-          256-bit encrypted • Secured by Stripe
+        <div className="flex items-center gap-2 text-[11px] text-[#6B7280]">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#22C55E] shadow-[0_0_6px_#22C55E]" />
+          <span>Secured by Stripe • Card details never touch YesViral servers</span>
         </div>
       </div>
 
       {/* ERROR */}
       {error && (
-        <div className="text-red-500 text-sm text-center font-semibold">
+        <div className="text-center text-sm font-semibold text-red-500">
           {error}
         </div>
       )}
 
       {/* PAY BUTTON */}
       <button
+        type="submit"
         disabled={loading}
         className="
-          w-full py-4 rounded-xl text-white font-bold text-lg
-          bg-[#007BFF] hover:bg-[#005FCC] transition-all
-          shadow-[0_6px_20px_rgba(0,123,255,0.25)]
-          disabled:opacity-40
+          w-full h-12
+          rounded-2xl
+          bg-gradient-to-r from-[#007BFF] to-[#005FCC]
+          text-white text-sm sm:text-base font-bold
+          shadow-[0_12px_35px_rgba(0,123,255,0.55)]
+          flex items-center justify-center gap-2
+          hover:from-[#005FCC] hover:to-[#0049A8]
+          transition-all
+          disabled:opacity-50 disabled:shadow-none
         "
       >
-        {loading ? "Processing..." : "Complete Payment"}
+        {loading ? "Processing..." : "Complete Secure Payment"}
       </button>
-    </form>
-  );
-}
 
-function SummaryRow({ label, value }: any) {
-  return (
-    <div className="flex justify-between text-sm text-[#333]">
-      <span className="font-medium text-[#6B7A90]">{label}</span>
-      <span className="font-semibold">{value}</span>
-    </div>
+      {/* TINY FOOTER TEXT */}
+      <p className="text-[11px] text-center text-[#6B7280]">
+        By completing this purchase, you agree to YesViral&apos;s Terms & Refund Policy.
+      </p>
+    </form>
   );
 }
