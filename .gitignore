@@ -1,0 +1,26 @@
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+dist/
+build/
+
+# Vercel
+.vercel/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/
+.turbo/
