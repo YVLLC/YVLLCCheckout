@@ -14,6 +14,8 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(true);
 
     try {
+      if (!order) throw new Error("Missing order details.");
+
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
@@ -23,7 +25,9 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-const res = await fetch("https://yesviral.com/api/payment_intent", {
+      // ⭐ IMPORTANT ⭐
+      // Use the LOCAL checkout API, not yesviral.com
+      const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -32,27 +36,48 @@ const res = await fetch("https://yesviral.com/api/payment_intent", {
         }),
       });
 
-      const { clientSecret, error: serverError } = await res.json();
-      if (serverError || !clientSecret) throw new Error(serverError || "Payment failed.");
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("PaymentIntent server error:", txt);
+        throw new Error("Server error creating payment.");
+      }
 
-      if (!stripe || !elements) throw new Error("Stripe not loaded");
-      const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: elements.getElement(CardElement)!,
+      const { clientSecret, error: serverError } = await res.json();
+      if (serverError || !clientSecret) {
+        console.error("Bad JSON:", { clientSecret, serverError });
+        throw new Error(serverError || "Payment failed.");
+      }
+
+      if (!stripe || !elements) {
+        throw new Error("Stripe not loaded.");
+      }
+
+      const { error: stripeError } = await stripe.confirmCardPayment(
+        clientSecret,
+        {
+          payment_method: {
+            card: elements.getElement(CardElement)!,
+          },
         }
-      });
+      );
+
       if (stripeError) throw new Error(stripeError.message);
 
       window.location.href = "/checkout/success";
     } catch (e: any) {
+      console.error("Checkout error:", e);
       setError(e.message || "An error occurred.");
     }
+
     setLoading(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="yv-checkout-form">
-      {/* ... unchanged UI ... */}
+      {/* Your CardElement + UI goes here */}
+      {error && (
+        <p className="text-red-500 text-sm text-center mt-2">{error}</p>
+      )}
       <PaymentButton loading={loading} />
     </form>
   );
