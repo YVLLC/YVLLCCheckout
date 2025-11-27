@@ -18,8 +18,6 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(true);
 
     try {
-      if (!order) throw new Error("Order data missing.");
-
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
@@ -29,7 +27,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-      // ⭐ USE LOCAL API TO AVOID CORS
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -39,39 +36,23 @@ export default function CheckoutForm({ order }: { order: any }) {
         }),
       });
 
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error("Server error:", txt);
-        throw new Error("Failed to create payment. Try again.");
-      }
-
       const { clientSecret, error: serverError } = await res.json();
+      if (serverError || !clientSecret) throw new Error(serverError || "Payment failed.");
 
-      if (serverError || !clientSecret) {
-        throw new Error(serverError || "Unable to process payment.");
-      }
-
-      if (!stripe || !elements)
-        throw new Error("Stripe not initialized.");
+      if (!stripe || !elements) throw new Error("Stripe not loaded");
 
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) throw new Error("Card input not found.");
 
-      const { error: stripeError } = await stripe.confirmCardPayment(
-        clientSecret,
-        {
-          payment_method: {
-            card: cardElement,
-          },
-        }
-      );
+      const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card: cardElement },
+      });
 
       if (stripeError) throw new Error(stripeError.message);
 
       window.location.href = "/checkout/success";
     } catch (e: any) {
-      console.error("Checkout error:", e);
-      setError(e.message || "Unexpected error.");
+      setError(e.message || "An error occurred.");
     }
 
     setLoading(false);
@@ -81,56 +62,52 @@ export default function CheckoutForm({ order }: { order: any }) {
     <form
       onSubmit={handleSubmit}
       className="
-        w-full 
-        max-w-xl 
-        mx-auto 
-        flex 
-        flex-col 
-        gap-6 
-        px-4 
-        sm:px-6 
-        md:px-0
+        w-full max-w-lg mx-auto
+        p-6 sm:p-10
+        flex flex-col gap-8
+        bg-white/70 backdrop-blur-xl
+        rounded-3xl shadow-[0_20px_80px_rgba(0,123,255,0.15)]
+        border border-[#CFE4FF]
+        animate-fadeIn
       "
     >
 
-      {/* CARD ELEMENT BLOCK */}
+      {/* HEADER */}
+      <div className="text-center space-y-2">
+        <h2 className="text-3xl font-black text-[#007BFF] tracking-tight drop-shadow-sm">
+          Secure Checkout
+        </h2>
+        <p className="text-sm text-[#555]">
+          Pay safely with encrypted Stripe payments.
+        </p>
+      </div>
+
+      {/* CARD FIELD WRAPPER */}
       <div
         className="
-          w-full 
-          bg-white 
-          rounded-2xl 
-          border 
-          border-[#DCE8FF] 
-          shadow-[0_4px_18px_rgba(0,0,0,0.05)] 
-          p-5 
-          space-y-3
+          bg-gradient-to-br from-[#F6FAFF] to-white
+          border border-[#DCE8FF]
+          rounded-2xl p-6
+          shadow-[0_6px_25px_rgba(0,123,255,0.09)]
+          transition duration-300
+          hover:shadow-[0_8px_32px_rgba(0,123,255,0.13)]
+          space-y-4
         "
       >
-        <label
-          className="
-            block 
-            text-sm 
-            font-semibold 
-            text-[#0B63E6] 
-            tracking-tight
-          "
-        >
+        <label className="block text-sm font-bold text-[#005FCC] uppercase tracking-wide">
           Card Information
         </label>
 
+        {/* CARD ELEMENT */}
         <div
           className="
-            border 
-            border-[#CFE4FF] 
-            rounded-xl 
-            bg-[#F9FBFF] 
-            px-4 
-            py-3
-            shadow-inner 
-            transition 
+            w-full
+            px-4 py-4 rounded-xl
+            bg-white shadow-inner
+            border border-[#CFE4FF]
             focus-within:border-[#007BFF]
-            focus-within:ring-2
-            focus-within:ring-[#E6F0FF]
+            focus-within:ring-4 focus-within:ring-[#E6F0FF]
+            transition-all
           "
         >
           <CardElement
@@ -138,36 +115,61 @@ export default function CheckoutForm({ order }: { order: any }) {
               hidePostalCode: true,
               style: {
                 base: {
-                  fontSize: "17px",
-                  fontWeight: "500",
+                  fontSize: "18px",
+                  fontWeight: "600",
                   color: "#111",
-                  "::placeholder": { color: "#9BB3DA" },
+                  letterSpacing: "0.4px",
+                  fontSmoothing: "antialiased",
+                  "::placeholder": { color: "#A6B9D9" },
                 },
-                invalid: {
-                  color: "#EF4444",
-                },
+                invalid: { color: "#EF4444" },
               },
             }}
           />
         </div>
 
+        {/* SECURE BADGE */}
         <div className="flex items-center gap-2 mt-1">
-          <span className="w-2 h-2 bg-[#22C55E] rounded-full"></span>
-          <span className="text-[11px] text-[#6B7280]">
+          <span className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_6px_#22C55E]"></span>
+          <span className="text-xs text-[#6B7280]">
             256-bit encrypted • Secured by Stripe
           </span>
         </div>
       </div>
 
-      {/* ERROR MESSAGE */}
+      {/* ORDER SUMMARY */}
+      <div className="
+        bg-[#F5FAFF]
+        rounded-xl border border-[#DCEBFF]
+        p-5 space-y-2 shadow-sm
+      ">
+        <h3 className="text-sm font-bold text-[#007BFF] tracking-tight">
+          Order Summary
+        </h3>
+        <p className="text-sm text-[#333] flex justify-between">
+          <span>{order.amount.toLocaleString()} {order.service}</span>
+          <span className="font-bold text-[#007BFF]">
+            ${order.total.toFixed(2)}
+          </span>
+        </p>
+        <p className="text-xs text-[#666]">
+          Platform: <b>{order.platform}</b>
+        </p>
+        <p className="text-xs text-[#666]">
+          Target: <b>{order.reference}</b>
+        </p>
+      </div>
+
+      {/* ERROR */}
       {error && (
-        <div className="text-red-500 text-sm text-center font-medium px-2">
+        <div className="text-red-500 text-center text-sm font-semibold">
           {error}
         </div>
       )}
 
-      {/* PAYMENT BUTTON */}
+      {/* BUTTON */}
       <PaymentButton loading={loading} />
+
     </form>
   );
 }
