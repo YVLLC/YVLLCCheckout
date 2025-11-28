@@ -12,26 +12,31 @@ const cardStyle = {
     base: {
       fontSize: "18px",
       fontWeight: 600,
-      fontFamily: "Inter, system-ui",
       color: "#111",
+      fontFamily: "Inter, system-ui, -apple-system",
       "::placeholder": { color: "#9BB3DA" },
     },
-    invalid: { color: "#EF4444" },
+    invalid: {
+      color: "#EF4444",
+      iconColor: "#EF4444",
+    },
   },
 };
 
 export default function CheckoutForm({ order }: { order: any }) {
   const stripe = useStripe();
   const elements = useElements();
+
   const [brand, setBrand] = useState("unknown");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** 🔥 Detect Card Brand in Real-Time */
+  /** 🔥 Detect Card Brand */
   const handleCardBrand = (event: any) => {
     setBrand(event.brand || "unknown");
   };
 
+  /** 🔥 Submit payment */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -59,14 +64,15 @@ export default function CheckoutForm({ order }: { order: any }) {
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
-      const num = elements?.getElement(CardNumberElement);
-      if (!stripe || !num) throw new Error("Stripe failed to load.");
+      const numberEl = elements?.getElement(CardNumberElement);
+      if (!stripe || !numberEl) throw new Error("Stripe not ready.");
 
       const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: num },
+        payment_method: { card: numberEl },
       });
 
       if (result.error) throw new Error(result.error.message);
+
       window.location.href = "/checkout/success";
     } catch (err: any) {
       setError(err.message);
@@ -91,6 +97,7 @@ export default function CheckoutForm({ order }: { order: any }) {
       {/* ORDER SUMMARY */}
       <div className="space-y-3">
         <h3 className="text-xl font-bold text-[#007BFF]">Order Summary</h3>
+
         <SummaryRow label="Package" value={order.package || order.service} />
         <SummaryRow label="Platform" value={order.platform} />
         <SummaryRow label="Amount" value={order.amount.toLocaleString()} />
@@ -106,18 +113,26 @@ export default function CheckoutForm({ order }: { order: any }) {
       <div
         className="
           bg-[#F9FBFF] border border-[#CFE4FF]
-          rounded-2xl p-5 space-y-4
+          rounded-2xl p-5 space-y-5
           shadow-[0_3px_12px_rgba(0,123,255,0.07)]
         "
       >
+        {/* LABEL */}
         <label className="text-sm font-bold text-[#005FCC] uppercase">
           Card Information
         </label>
 
-        {/* Brand Icon Row */}
+        {/* ICON + BRAND NAME */}
         <div className="flex items-center gap-3 mb-1">
-          <img src={brandIcon} className="h-7 w-auto" />
-          <span className="text-xs text-[#6B7280] font-medium">
+          <div className="w-10 h-10 rounded-lg bg-white border border-[#DCE8FF] flex items-center justify-center shadow-sm">
+            <img 
+              src={brandIcon}
+              className="w-7 h-7 object-contain drop-shadow-sm opacity-90"
+              alt={brand}
+            />
+          </div>
+
+          <span className="text-sm text-[#6B7280] font-semibold tracking-wide">
             {brand === "unknown" ? "Enter card number" : brand.toUpperCase()}
           </span>
         </div>
@@ -137,6 +152,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           </div>
         </div>
 
+        {/* SECURE BADGE */}
         <div className="flex items-center gap-2 text-xs text-[#6B7280]">
           <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_5px_#22C55E]" />
           256-bit encrypted • Secured by Stripe
@@ -150,7 +166,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         </div>
       )}
 
-      {/* BUTTON */}
+      {/* PAY BUTTON */}
       <button
         disabled={loading}
         className="
@@ -163,6 +179,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         {loading ? "Processing..." : "Complete Payment"}
       </button>
 
+      {/* CARD BOX STYLING */}
       <style jsx>{`
         .ys-card-box {
           background: white;
@@ -180,6 +197,7 @@ export default function CheckoutForm({ order }: { order: any }) {
   );
 }
 
+/* SUMMARY ROW */
 function SummaryRow({ label, value }: any) {
   return (
     <div className="flex justify-between text-sm text-[#333]">
