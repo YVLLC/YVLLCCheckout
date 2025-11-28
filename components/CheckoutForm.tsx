@@ -6,6 +6,7 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { CheckCircle } from "lucide-react";
 
 const cardStyle = {
   style: {
@@ -31,12 +32,10 @@ export default function CheckoutForm({ order }: { order: any }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** Detect Card Brand */
   const handleCardBrand = (event: any) => {
     setBrand(event.brand || "unknown");
   };
 
-  /** Submit Payment */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -116,12 +115,10 @@ export default function CheckoutForm({ order }: { order: any }) {
           shadow-[0_3px_12px_rgba(0,123,255,0.07)]
         "
       >
-        {/* LABEL */}
         <label className="text-sm font-bold text-[#005FCC] uppercase">
           Card Information
         </label>
 
-        {/* ICON + BRAND NAME */}
         <div className="flex items-center gap-3 mb-1">
           <div className="w-10 h-10 rounded-lg bg-white border border-[#DCE8FF] flex items-center justify-center shadow-sm">
             <img
@@ -136,12 +133,10 @@ export default function CheckoutForm({ order }: { order: any }) {
           </span>
         </div>
 
-        {/* Card Number */}
         <div className="ys-card-box">
           <CardNumberElement options={cardStyle} onChange={handleCardBrand} />
         </div>
 
-        {/* Exp + CVC */}
         <div className="grid grid-cols-2 gap-3">
           <div className="ys-card-box">
             <CardExpiryElement options={cardStyle} />
@@ -151,7 +146,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           </div>
         </div>
 
-        {/* TRUST BADGE */}
+        {/* Trust Badge */}
         <div className="flex items-center justify-center gap-2 text-xs text-[#6B7280] pt-1">
           <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_5px_#22C55E]" />
           Verified Safe Checkout • SSL Encrypted Transaction
@@ -178,10 +173,9 @@ export default function CheckoutForm({ order }: { order: any }) {
         {loading ? "Processing..." : "Complete Payment"}
       </button>
 
-      {/* LEGAL + GUARANTEE SECTION */}
+      {/* LEGAL + GUARANTEE */}
       <div className="space-y-3 mt-1">
 
-        {/* LEGAL NOTICE */}
         <div className="text-[11px] leading-relaxed text-center text-[#6B7280] px-2">
           By completing your purchase, you agree to our{" "}
           <a
@@ -196,8 +190,8 @@ export default function CheckoutForm({ order }: { order: any }) {
             className="text-[#007BFF] underline hover:text-[#005FCC] transition"
           >
             Privacy Policy
-          </a>{" "}
-          and{" "}
+          </a>
+          {" "}and{" "}
           <a
             href="https://yesviral.com/refunds"
             className="text-[#007BFF] underline hover:text-[#005FCC] transition"
@@ -206,16 +200,12 @@ export default function CheckoutForm({ order }: { order: any }) {
           </a>
           .
           <br />
-          Orders begin processing instantly. Delivery varies by platform speed.
+          Orders begin processing instantly. Delivery varies by platform.
         </div>
 
-        {/* 30-DAY GUARANTEE WITH CHECKMARK */}
-        <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-[#4B5563]">
-          <img
-            src="/icons/check-circle.svg"
-            className="w-3.5 h-3.5 opacity-90"
-            alt="check"
-          />
+        {/* CHECKMARK + GUARANTEE */}
+        <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-[#4B5563] mt-1">
+          <CheckCircle size={13} className="text-[#22C55E]" />
           <span>30-Day Refill Guarantee • 24/7 Priority Support</span>
         </div>
       </div>
@@ -237,7 +227,6 @@ export default function CheckoutForm({ order }: { order: any }) {
   );
 }
 
-/* SUMMARY ROW */
 function SummaryRow({ label, value }: any) {
   return (
     <div className="flex justify-between text-sm text-[#333]">
