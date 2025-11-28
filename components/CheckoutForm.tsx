@@ -125,7 +125,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         {/* ICON + BRAND NAME */}
         <div className="flex items-center gap-3 mb-1">
           <div className="w-10 h-10 rounded-lg bg-white border border-[#DCE8FF] flex items-center justify-center shadow-sm">
-            <img 
+            <img
               src={brandIcon}
               className="w-7 h-7 object-contain drop-shadow-sm opacity-90"
               alt={brand}
@@ -179,6 +179,35 @@ export default function CheckoutForm({ order }: { order: any }) {
         {loading ? "Processing..." : "Complete Payment"}
       </button>
 
+      {/* LEGAL NOTICE */}
+      <div className="text-[11px] leading-relaxed text-center text-[#6B7280] mt-2 px-2">
+        By completing your purchase, you agree to our{" "}
+        <a
+          href="/terms"
+          className="text-[#007BFF] underline hover:text-[#005FCC] transition"
+        >
+          Terms of Service
+        </a>
+        ,{" "}
+        <a
+          href="/privacy"
+          className="text-[#007BFF] underline hover:text-[#005FCC] transition"
+        >
+          Privacy Policy
+        </a>{" "}
+        and{" "}
+        <a
+          href="/refunds"
+          className="text-[#007BFF] underline hover:text-[#005FCC] transition"
+        >
+          Refund Policy
+        </a>
+        .  
+        <br />
+        All orders begin processing instantly after payment. Delivery times
+        vary based on platform speed and queue.
+      </div>
+
       {/* CARD BOX STYLING */}
       <style jsx>{`
         .ys-card-box {
@@ -186,7 +215,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           border: 1px solid #cfe4ff;
           padding: 14px 18px;
           border-radius: 14px;
-          box-shadow: inset 0 1px 3px rgba(0,0,0,0.04);
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
         }
         .ys-card-box:focus-within {
           border-color: #007bff;
