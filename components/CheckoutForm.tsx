@@ -193,7 +193,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           </a>
           {" "}and{" "}
           <a
-            href="https://yesviral.com/refunds"
+            href="https://yesviral.com/terms"
             className="text-[#007BFF] underline hover:text-[#005FCC] transition"
           >
             Refund Policy
