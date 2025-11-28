@@ -31,12 +31,12 @@ export default function CheckoutForm({ order }: { order: any }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** 🔥 Detect Card Brand */
+  /** Detect Card Brand */
   const handleCardBrand = (event: any) => {
     setBrand(event.brand || "unknown");
   };
 
-  /** 🔥 Submit payment */
+  /** Submit Payment */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -81,7 +81,6 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(false);
   };
 
-  /** 🔥 Card brand → SVG path */
   const brandIcon = `/card-brands/${brand}.svg`;
 
   return (
@@ -152,7 +151,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           </div>
         </div>
 
-        {/* TRUST BADGE (updated) */}
+        {/* TRUST BADGE */}
         <div className="flex items-center justify-center gap-2 text-xs text-[#6B7280] pt-1">
           <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_5px_#22C55E]" />
           Verified Safe Checkout • SSL Encrypted Transaction
@@ -180,7 +179,7 @@ export default function CheckoutForm({ order }: { order: any }) {
       </button>
 
       {/* LEGAL + GUARANTEE SECTION */}
-      <div className="space-y-2 mt-1">
+      <div className="space-y-3 mt-1">
 
         {/* LEGAL NOTICE */}
         <div className="text-[11px] leading-relaxed text-center text-[#6B7280] px-2">
@@ -205,19 +204,22 @@ export default function CheckoutForm({ order }: { order: any }) {
           >
             Refund Policy
           </a>
-          .  
+          .
           <br />
-          All orders begin processing instantly after payment. Delivery times
-          vary based on platform speed and queue.
+          Orders begin processing instantly. Delivery varies by platform speed.
         </div>
 
-        {/* GUARANTEE BELOW LEGAL */}
-        <div className="text-[11px] font-semibold text-center text-[#4B5563]">
-          30-Day Refill Guarantee • 24/7 Priority Support
+        {/* 30-DAY GUARANTEE WITH CHECKMARK */}
+        <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-[#4B5563]">
+          <img
+            src="/icons/check-circle.svg"
+            className="w-3.5 h-3.5 opacity-90"
+            alt="check"
+          />
+          <span>30-Day Refill Guarantee • 24/7 Priority Support</span>
         </div>
       </div>
 
-      {/* CARD BOX STYLING */}
       <style jsx>{`
         .ys-card-box {
           background: white;
