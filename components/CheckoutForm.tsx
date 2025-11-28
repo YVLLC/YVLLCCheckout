@@ -152,10 +152,10 @@ export default function CheckoutForm({ order }: { order: any }) {
           </div>
         </div>
 
-        {/* SECURE BADGE */}
-        <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+        {/* TRUST BADGE (updated) */}
+        <div className="flex items-center justify-center gap-2 text-xs text-[#6B7280] pt-1">
           <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_5px_#22C55E]" />
-          256-bit encrypted • Secured by Stripe
+          Verified Safe Checkout • SSL Encrypted Transaction
         </div>
       </div>
 
@@ -179,33 +179,42 @@ export default function CheckoutForm({ order }: { order: any }) {
         {loading ? "Processing..." : "Complete Payment"}
       </button>
 
-      {/* LEGAL NOTICE */}
-      <div className="text-[11px] leading-relaxed text-center text-[#6B7280] mt-2 px-2">
-        By completing your purchase, you agree to our{" "}
-        <a
-          href="/terms"
-          className="text-[#007BFF] underline hover:text-[#005FCC] transition"
-        >
-          Terms of Service
-        </a>
-        ,{" "}
-        <a
-          href="/privacy"
-          className="text-[#007BFF] underline hover:text-[#005FCC] transition"
-        >
-          Privacy Policy
-        </a>{" "}
-        and{" "}
-        <a
-          href="/refunds"
-          className="text-[#007BFF] underline hover:text-[#005FCC] transition"
-        >
-          Refund Policy
-        </a>
-        .  
-        <br />
-        All orders begin processing instantly after payment. Delivery times
-        vary based on platform speed and queue.
+      {/* LEGAL + GUARANTEE SECTION */}
+      <div className="space-y-2 mt-1">
+
+        {/* LEGAL NOTICE */}
+        <div className="text-[11px] leading-relaxed text-center text-[#6B7280] px-2">
+          By completing your purchase, you agree to our{" "}
+          <a
+            href="https://yesviral.com/terms"
+            className="text-[#007BFF] underline hover:text-[#005FCC] transition"
+          >
+            Terms of Service
+          </a>
+          ,{" "}
+          <a
+            href="https://yesviral.com/privacy"
+            className="text-[#007BFF] underline hover:text-[#005FCC] transition"
+          >
+            Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a
+            href="https://yesviral.com/refunds"
+            className="text-[#007BFF] underline hover:text-[#005FCC] transition"
+          >
+            Refund Policy
+          </a>
+          .  
+          <br />
+          All orders begin processing instantly after payment. Delivery times
+          vary based on platform speed and queue.
+        </div>
+
+        {/* GUARANTEE BELOW LEGAL */}
+        <div className="text-[11px] font-semibold text-center text-[#4B5563]">
+          30-Day Refill Guarantee • 24/7 Priority Support
+        </div>
       </div>
 
       {/* CARD BOX STYLING */}
