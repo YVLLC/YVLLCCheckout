@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import {
+  useStripe,
+  useElements,
   CardNumberElement,
   CardExpiryElement,
   CardCvcElement,
-  useStripe,
-  useElements,
 } from "@stripe/react-stripe-js";
 import { CheckCircle } from "lucide-react";
 
@@ -44,6 +44,9 @@ export default function CheckoutForm({ order }: { order: any }) {
     setError(null);
 
     try {
+      // ------------------------------------------------------------
+      // Encode metadata to send to Stripe for Followiz webhook usage
+      // ------------------------------------------------------------
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
@@ -55,6 +58,9 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
+      // ------------------------------------------------------------
+      // Create PaymentIntent on server
+      // ------------------------------------------------------------
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,22 +73,24 @@ export default function CheckoutForm({ order }: { order: any }) {
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
-      const numberEl = elements?.getElement(CardNumberElement);
-      if (!stripe || !elements || !numberEl)
+      if (!stripe || !elements) {
         throw new Error("Stripe not ready.");
+      }
 
-      /** --------------------------------------------------
-       * FINAL STRIPE-CORRECT METHOD
-       * Card Elements → confirmCardPayment()
-       ---------------------------------------------------- */
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: numberEl,
+      // ------------------------------------------------------------
+      // ⭐ CORRECT REDIRECT-BASED PAYMENT METHOD
+      // This triggers Stripe → handles 3DS → redirects → success page
+      // ------------------------------------------------------------
+      await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: "https://checkout.yesviral.com/checkout/success",
         },
-        return_url: "https://checkout.yesviral.com/checkout/success",
       });
 
-      if (result.error) throw new Error(result.error.message);
+      // No "result" object needed — Stripe will redirect automatically.
+      // Webhook handles Followiz order creation.
 
     } catch (err: any) {
       setError(err.message);
