@@ -6,7 +6,6 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
-import { CheckCircle } from "lucide-react";
 
 const cardStyle = {
   style: {
@@ -27,8 +26,8 @@ const cardStyle = {
 export default function CheckoutForm({ order }: { order: any }) {
   const stripe = useStripe();
   const elements = useElements();
-
   const brandRef = useRef("unknown");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, forceRerender] = useState({});
@@ -55,7 +54,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-      // Create PaymentIntent using correct metadata key
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,15 +65,24 @@ export default function CheckoutForm({ order }: { order: any }) {
 
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
-
       if (!stripe || !elements) throw new Error("Stripe not ready.");
 
-      // ⭐ CORRECT redirect flow
+      // ⭐ FIXED: parameter is "reference" NOT "ref"
+      const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
+        order.platform
+      )}&service=${encodeURIComponent(
+        order.service
+      )}&quantity=${encodeURIComponent(
+        order.amount
+      )}&total=${encodeURIComponent(
+        order.total
+      )}&reference=${encodeURIComponent(order.reference)}`;
+
       await stripe.confirmPayment({
         elements,
         clientSecret,
         confirmParams: {
-          return_url: "https://checkout.yesviral.com/checkout/success",
+          return_url: successURL,
         },
       });
     } catch (err: any) {
@@ -107,7 +114,9 @@ export default function CheckoutForm({ order }: { order: any }) {
 
         <div className="flex justify-between text-lg font-black border-t pt-3 border-[#E4EEFF]">
           <span>Total</span>
-          <span className="text-[#007BFF]">${order.total.toFixed(2)}</span>
+          <span className="text-[#007BFF]">
+            ${order.total.toFixed(2)}
+          </span>
         </div>
       </div>
 

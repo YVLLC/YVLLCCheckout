@@ -1,10 +1,28 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 export default function SuccessPage() {
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  // Wait for router.query to be ready (fixes hydration issues)
+  useEffect(() => {
+    if (router.isReady) setReady(true);
+  }, [router.isReady]);
+
+  // Extract real order data safely
+  const platform = ready ? (router.query.platform as string) || "—" : "Loading...";
+  const service = ready ? (router.query.service as string) || "—" : "Loading...";
+  const quantity = ready ? (router.query.quantity as string) || "—" : "Loading...";
+  const total = ready ? (router.query.total as string) || "—" : "Loading...";
+  const reference = ready ? (router.query.reference as string) || "—" : "Loading...";
+
   const [countdown, setCountdown] = useState(7);
 
-  // Countdown auto redirect
+  // Auto redirect countdown
   useEffect(() => {
+    if (!ready) return;
+
     const interval = setInterval(() => {
       setCountdown((c) => {
         if (c === 1) {
@@ -16,39 +34,45 @@ export default function SuccessPage() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [ready]);
 
-  // Trigger confetti burst on load
+  // One-time confetti
   useEffect(() => {
+    if (!ready) return;
+
     const confetti = () => {
       const duration = 1800;
       const end = Date.now() + duration;
-
       (function frame() {
         if (typeof window === "undefined") return;
 
-        // Lightweight confetti without libs
         const colors = ["#007BFF", "#00F2EA", "#FF0000", "#22C55E", "#FACC15"];
         for (let i = 0; i < 30; i++) {
           const div = document.createElement("div");
           div.className = "confetti-piece";
-          div.style.background = colors[Math.floor(Math.random() * colors.length)];
+          div.style.background =
+            colors[Math.floor(Math.random() * colors.length)];
           document.body.appendChild(div);
-
           setTimeout(() => div.remove(), 1500);
         }
-
         if (Date.now() < end) requestAnimationFrame(frame);
       })();
     };
-
     confetti();
-  }, []);
+  }, [ready]);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-[#007BFF] text-xl font-bold">
+        Loading your order…
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#EEF6FF] to-[#F7FAFD] flex items-center justify-center px-4 py-16 overflow-hidden">
 
-      {/* FLOATING BACKGROUND PARTICLES */}
+      {/* Background Particles */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {[...Array(18)].map((_, i) => (
           <div
@@ -63,9 +87,8 @@ export default function SuccessPage() {
         ))}
       </div>
 
-      {/* MAIN CARD */}
-      <div
-        className="
+      {/* Main Card */}
+      <div className="
           relative w-full max-w-xl
           bg-white/80 backdrop-blur-2xl
           border border-[#DCE8FF]
@@ -74,18 +97,17 @@ export default function SuccessPage() {
           animate-fadeIn
         "
       >
-        {/* GLOWING RING BEHIND ICON */}
+
+        {/* Glow */}
         <div className="absolute -top-10 left-1/2 -translate-x-1/2">
           <div className="w-40 h-40 bg-[#007BFF]/20 rounded-full blur-3xl"></div>
         </div>
 
-        {/* SUCCESS ICON */}
+        {/* Icon */}
         <div className="relative mx-auto mb-8 w-24 h-24 rounded-3xl bg-[#22C55E]/10 border border-[#22C55E]/20 flex items-center justify-center shadow-[0_15px_40px_rgba(34,197,94,0.35)]">
-          {/* SPARKLES */}
           <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-300 rounded-full animate-ping opacity-60" />
           <div className="absolute -bottom-2 -left-1 w-3 h-3 bg-blue-300 rounded-full animate-pulse opacity-80" />
 
-          {/* Checkmark SVG */}
           <svg
             className="w-14 h-14 text-[#22C55E]"
             fill="none"
@@ -97,19 +119,17 @@ export default function SuccessPage() {
           </svg>
         </div>
 
-        {/* TITLE */}
         <h1 className="text-3xl sm:text-4xl font-black text-[#22C55E] tracking-tight">
           Payment Successful!
         </h1>
 
-        {/* SUBTEXT */}
         <p className="mt-4 text-[#475569] text-lg leading-relaxed font-medium px-3">
           Your order has been received and is now being processed.
           <br />
           You’ll receive updates shortly.
         </p>
 
-        {/* ORDER SUMMARY */}
+        {/* REAL ORDER SUMMARY */}
         <div className="mt-10 bg-white/70 border border-[#CFE4FF] rounded-2xl shadow-[0_8px_30px_rgba(0,123,255,0.07)] p-6 text-left">
           <h3 className="text-[#007BFF] text-xl font-extrabold mb-4">
             Order Summary
@@ -117,12 +137,24 @@ export default function SuccessPage() {
 
           <div className="space-y-2 text-sm font-medium text-[#374151]">
             <div className="flex justify-between">
-              <span>Package</span>
-              <span className="font-semibold text-[#0F172A]">Premium Delivery</span>
+              <span>Platform</span>
+              <span className="font-semibold">{platform}</span>
             </div>
             <div className="flex justify-between">
-              <span>Platform</span>
-              <span className="font-semibold text-[#0F172A]">Social Media</span>
+              <span>Service</span>
+              <span className="font-semibold">{service}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Quantity</span>
+              <span className="font-semibold">{quantity}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Target</span>
+              <span className="font-semibold truncate max-w-[55%]">{reference}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Total Paid</span>
+              <span className="font-semibold">${total}</span>
             </div>
             <div className="flex justify-between">
               <span>Status</span>
@@ -135,9 +167,8 @@ export default function SuccessPage() {
           </div>
         </div>
 
-        {/* BUTTONS */}
+        {/* Buttons */}
         <div className="mt-10 flex flex-col gap-4 items-center">
-          {/* TRACK ORDER */}
           <a
             href="/track-order"
             className="
@@ -152,7 +183,6 @@ export default function SuccessPage() {
             Track Your Order
           </a>
 
-          {/* RETURN HOME */}
           <a
             href="/"
             className="
@@ -165,14 +195,13 @@ export default function SuccessPage() {
             Return Home
           </a>
 
-          {/* COUNTDOWN */}
           <p className="text-xs text-[#94A3B8] mt-1">
             Redirecting you in {countdown} seconds…
           </p>
         </div>
       </div>
 
-      {/* CONFETTI CSS */}
+      {/* Confetti CSS */}
       <style jsx>{`
         .confetti-piece {
           position: fixed;

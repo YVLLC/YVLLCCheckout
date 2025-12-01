@@ -15,7 +15,6 @@ function getOrderFromURL() {
 
   const params = new URLSearchParams(window.location.search);
   const raw = params.get("order");
-
   if (!raw) return null;
 
   try {
@@ -27,36 +26,12 @@ function getOrderFromURL() {
 
 export default function CheckoutPage() {
   const [order, setOrder] = useState<any>(null);
-  const [clientSecret, setClientSecret] = useState<string>("");
 
-  // Load order + create PaymentIntent
   useEffect(() => {
     const o = getOrderFromURL();
     setOrder(o);
-
-    if (!o) return;
-
-    fetch("/api/payment_intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: Math.round(o.total * 100),
-        metadata: {
-          order: btoa(JSON.stringify(o)),
-        },
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-        } else {
-          console.error("❌ No clientSecret returned:", data);
-        }
-      });
   }, []);
 
-  // No order loaded = direct visit
   if (!order) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -66,15 +41,6 @@ export default function CheckoutPage() {
             Start from the main YesViral website
           </h2>
         </div>
-      </div>
-    );
-  }
-
-  // Wait for clientSecret BEFORE mounting Elements
-  if (!clientSecret) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-[#111]">
-        Initializing Secure Checkout…
       </div>
     );
   }
@@ -102,17 +68,10 @@ export default function CheckoutPage() {
         </div>
 
         {/* STRIPE ELEMENTS */}
-        <Elements
-          stripe={stripePromise}
-          options={{
-            clientSecret,
-            appearance: {
-              theme: "stripe",
-            },
-          }}
-        >
+        <Elements stripe={stripePromise}>
           <CheckoutForm order={order} />
         </Elements>
+
       </div>
     </div>
   );
