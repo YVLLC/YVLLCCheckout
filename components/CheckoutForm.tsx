@@ -6,6 +6,7 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
+import { CheckCircle } from "lucide-react";
 
 const cardStyle = {
   style: {
@@ -26,8 +27,8 @@ const cardStyle = {
 export default function CheckoutForm({ order }: { order: any }) {
   const stripe = useStripe();
   const elements = useElements();
-  const brandRef = useRef("unknown");
 
+  const brandRef = useRef("unknown");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, forceRerender] = useState({});
@@ -54,6 +55,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
+      // Call proxy PaymentIntent creator
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -65,26 +67,30 @@ export default function CheckoutForm({ order }: { order: any }) {
 
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
+
       if (!stripe || !elements) throw new Error("Stripe not ready.");
 
-      // ⭐ FIXED: parameter is "reference" NOT "ref"
+      const cardElement = elements.getElement(CardNumberElement);
+      if (!cardElement) throw new Error("Card element not found");
+
+      // Redirect URL with full order
       const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
         order.platform
-      )}&service=${encodeURIComponent(
-        order.service
-      )}&quantity=${encodeURIComponent(
+      )}&service=${encodeURIComponent(order.service)}&quantity=${encodeURIComponent(
         order.amount
-      )}&total=${encodeURIComponent(
-        order.total
-      )}&reference=${encodeURIComponent(order.reference)}`;
+      )}&total=${encodeURIComponent(order.total)}&ref=${encodeURIComponent(
+        order.reference
+      )}`;
 
-      await stripe.confirmPayment({
-        elements,
-        clientSecret,
-        confirmParams: {
-          return_url: successURL,
+      // ⭐ FIX: Correct method for Card Elements
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
         },
+        return_url: successURL,
       });
+
+      if (result.error) throw new Error(result.error.message);
     } catch (err: any) {
       setError(err.message);
     }
@@ -114,9 +120,7 @@ export default function CheckoutForm({ order }: { order: any }) {
 
         <div className="flex justify-between text-lg font-black border-t pt-3 border-[#E4EEFF]">
           <span>Total</span>
-          <span className="text-[#007BFF]">
-            ${order.total.toFixed(2)}
-          </span>
+          <span className="text-[#007BFF]">${order.total.toFixed(2)}</span>
         </div>
       </div>
 
