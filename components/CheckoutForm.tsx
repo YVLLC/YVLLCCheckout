@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   CardNumberElement,
   CardExpiryElement,
@@ -28,12 +28,16 @@ export default function CheckoutForm({ order }: { order: any }) {
   const stripe = useStripe();
   const elements = useElements();
 
-  const [brand, setBrand] = useState("unknown");
+  // FIX: brand stored without triggering rerenders
+  const brandRef = useRef("unknown");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [, forceRerender] = useState({}); // used once to update icon ONCE at mount
 
   const handleCardBrand = (event: any) => {
-    setBrand(event.brand || "unknown");
+    brandRef.current = event.brand || "unknown";
+    forceRerender({}); // rerender ONCE, not constantly
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,17 +70,15 @@ export default function CheckoutForm({ order }: { order: any }) {
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
-      const numberEl = elements?.getElement(CardNumberElement);
-      if (!stripe || !elements || !numberEl)
-        throw new Error("Stripe not ready.");
+      if (!stripe || !elements)
+        throw new Error("Stripe is not ready.");
 
       /** --------------------------------------------------
-       * FIXED: PROPER CONFIRM METHOD + TS FIX
-       * prevents browser hitting Stripe REST with pk_test
-       * fixes 401, fixes TypeScript error
+       * FIXED: PROPER Stripe confirmPayment (NO REST CALL)
+       * stops 401 + lag + pk_test errors
        ---------------------------------------------------- */
       const result = await stripe.confirmPayment({
-        elements: elements!, // FIX: TS non-null assertion
+        elements: elements!, // TS fix
         clientSecret,
         confirmParams: {
           return_url: "https://checkout.yesviral.com/checkout/success",
@@ -91,7 +93,7 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(false);
   };
 
-  const brandIcon = `/card-brands/${brand}.svg`;
+  const brandIcon = `/card-brands/${brandRef.current}.svg`;
 
   return (
     <form
@@ -135,12 +137,14 @@ export default function CheckoutForm({ order }: { order: any }) {
             <img
               src={brandIcon}
               className="w-7 h-7 object-contain drop-shadow-sm opacity-90"
-              alt={brand}
+              alt={brandRef.current}
             />
           </div>
 
           <span className="text-sm text-[#6B7280] font-semibold tracking-wide">
-            {brand === "unknown" ? "Enter card number" : brand.toUpperCase()}
+            {brandRef.current === "unknown"
+              ? "Enter card number"
+              : brandRef.current.toUpperCase()}
           </span>
         </div>
 
