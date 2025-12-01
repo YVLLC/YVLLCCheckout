@@ -1,3 +1,4 @@
+// components/CheckoutForm.tsx
 import { useRef, useState } from "react";
 import {
   useStripe,
@@ -6,7 +7,6 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
-import { CheckCircle } from "lucide-react";
 
 const cardStyle = {
   style: {
@@ -40,62 +40,88 @@ export default function CheckoutForm({ order }: { order: any }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    if (!stripe || !elements) {
+      setError("Stripe is not ready yet. Please try again.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
+      // 🔹 Encode order metadata for webhook / Followiz
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
           service: order.service,
-          quantity: order.amount,
+          quantity: order.amount, // 👈 this is what webhook will read
           reference: order.reference,
           total: order.total,
-          email: order.email,
+          email: order.email || "",
         })
       );
 
-      // Call proxy PaymentIntent creator
+      // 🔹 Create PaymentIntent via your backend
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: Math.round(order.total * 100),
           metadata: { yesviral_order: encodedMeta },
+          email: order.email || null,
         }),
       });
 
       const { clientSecret, error: serverErr } = await res.json();
-      if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
-      if (!stripe || !elements) throw new Error("Stripe not ready.");
+      if (!res.ok || !clientSecret) {
+        throw new Error(serverErr || "Could not start payment. Try again.");
+      }
 
       const cardElement = elements.getElement(CardNumberElement);
-      if (!cardElement) throw new Error("Card element not found");
+      if (!cardElement) throw new Error("Card input not found.");
 
-      // Redirect URL with full order
-      const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
-        order.platform
-      )}&service=${encodeURIComponent(order.service)}&quantity=${encodeURIComponent(
-        order.amount
-      )}&total=${encodeURIComponent(order.total)}&ref=${encodeURIComponent(
-        order.reference
-      )}`;
-
-      // ⭐ FIX: Correct method for Card Elements
+      // 🔹 Confirm payment on frontend
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
+          billing_details: {
+            email: order.email || undefined,
+          },
         },
-        return_url: successURL,
       });
 
-      if (result.error) throw new Error(result.error.message);
-    } catch (err: any) {
-      setError(err.message);
-    }
+      if (result.error) {
+        throw new Error(result.error.message || "Payment failed.");
+      }
 
-    setLoading(false);
+      // 🔹 If Stripe says succeeded → FORCE redirect
+      if (result.paymentIntent?.status === "succeeded") {
+        const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
+          order.platform
+        )}&service=${encodeURIComponent(
+          order.service
+        )}&quantity=${encodeURIComponent(
+          order.amount
+        )}&total=${encodeURIComponent(order.total)}&ref=${encodeURIComponent(
+          order.reference
+        )}`;
+
+        window.location.href = successURL;
+        return;
+      }
+
+      // Any weird status:
+      throw new Error(
+        `Payment status: ${result.paymentIntent?.status || "unknown"}. If you were charged, contact support.`
+      );
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      setError(err.message || "Something went wrong with payment.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const brandIcon = `/card-brands/${brandRef.current}.svg`;
