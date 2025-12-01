@@ -44,9 +44,6 @@ export default function CheckoutForm({ order }: { order: any }) {
     setError(null);
 
     try {
-      // ------------------------------------------------------------
-      // Encode metadata to send to Stripe for Followiz webhook usage
-      // ------------------------------------------------------------
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
@@ -58,29 +55,22 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-      // ------------------------------------------------------------
-      // Create PaymentIntent on server
-      // ------------------------------------------------------------
+      // Create PaymentIntent using correct metadata key
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: Math.round(order.total * 100),
-          metadata: { order: encodedMeta },
+          metadata: { yesviral_order: encodedMeta },
         }),
       });
 
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
-      if (!stripe || !elements) {
-        throw new Error("Stripe not ready.");
-      }
+      if (!stripe || !elements) throw new Error("Stripe not ready.");
 
-      // ------------------------------------------------------------
-      // ⭐ CORRECT REDIRECT-BASED PAYMENT METHOD
-      // This triggers Stripe → handles 3DS → redirects → success page
-      // ------------------------------------------------------------
+      // ⭐ CORRECT redirect flow
       await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -88,10 +78,6 @@ export default function CheckoutForm({ order }: { order: any }) {
           return_url: "https://checkout.yesviral.com/checkout/success",
         },
       });
-
-      // No "result" object needed — Stripe will redirect automatically.
-      // Webhook handles Followiz order creation.
-
     } catch (err: any) {
       setError(err.message);
     }
@@ -111,7 +97,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         shadow-[0_20px_80px_rgba(0,123,255,0.15)]
       "
     >
-      {/* ORDER SUMMARY */}
       <div className="space-y-3">
         <h3 className="text-xl font-bold text-[#007BFF]">Order Summary</h3>
 
@@ -126,7 +111,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         </div>
       </div>
 
-      {/* CARD INPUTS */}
       <div
         className="
           bg-[#F9FBFF] border border-[#CFE4FF]
@@ -169,7 +153,7 @@ export default function CheckoutForm({ order }: { order: any }) {
 
         <div className="flex items-center justify-center gap-2 text-xs text-[#6B7280] pt-1">
           <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_5px_#22C55E]" />
-          Verified Safe Checkout • SSL Encrypted Transaction
+          Verified Safe Checkout • SSL Encrypted
         </div>
       </div>
 
@@ -190,38 +174,6 @@ export default function CheckoutForm({ order }: { order: any }) {
       >
         {loading ? "Processing..." : "Complete Payment"}
       </button>
-
-      <div className="space-y-3 mt-1">
-        <div className="text-[11px] leading-relaxed text-center text-[#6B7280] px-2">
-          By completing your purchase, you agree to our{" "}
-          <a
-            href="https://yesviral.com/terms"
-            className="text-[#007BFF] underline hover:text-[#005FCC] transition"
-          >
-            Terms of Service
-          </a>
-          ,{" "}
-          <a
-            href="https://yesviral.com/privacy"
-            className="text-[#007BFF] underline hover:text-[#005FCC] transition"
-          >
-            Privacy Policy
-          </a>{" "}
-          and{" "}
-          <a
-            href="https://yesviral.com/refunds"
-            className="text-[#007BFF] underline hover:text-[#005FCC] transition"
-          >
-            Refund Policy
-          </a>
-          .
-        </div>
-
-        <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-[#4B5563] mt-1">
-          <CheckCircle size={13} className="text-[#22C55E]" />
-          <span>30-Day Refill Guarantee • 24/7 Priority Support</span>
-        </div>
-      </div>
 
       <style jsx>{`
         .ys-card-box {
