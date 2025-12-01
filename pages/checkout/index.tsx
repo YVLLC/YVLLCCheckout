@@ -22,9 +22,29 @@ function getOrderFromURL() {
 
 export default function CheckoutPage() {
   const [order, setOrder] = useState<any>(null);
+  const [clientSecret, setClientSecret] = useState<string>("");
 
   useEffect(() => {
-    setOrder(getOrderFromURL());
+    const o = getOrderFromURL();
+    setOrder(o);
+
+    if (!o) return;
+
+    // CREATE PAYMENT INTENT FIRST → Stripe requires this BEFORE Elements
+    fetch("/api/payment_intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: Math.round(o.total * 100),
+        metadata: {
+          order: btoa(JSON.stringify(o)),
+        },
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.clientSecret) setClientSecret(data.clientSecret);
+      });
   }, []);
 
   if (!order) {
@@ -36,6 +56,15 @@ export default function CheckoutPage() {
             Start from the main YesViral website
           </h2>
         </div>
+      </div>
+    );
+  }
+
+  // WAIT until we have the clientSecret BEFORE rendering Elements
+  if (!clientSecret) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-[#111]">
+        Initializing Secure Checkout…
       </div>
     );
   }
@@ -62,12 +91,16 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* CHECKOUT FORM */}
-        <Elements stripe={stripePromise}>
+        {/* CHECKOUT FORM — NOW WITH CLIENT SECRET */}
+        <Elements
+          stripe={stripePromise}
+          options={{
+            clientSecret,
+            appearance: { theme: "stripe" },
+          }}
+        >
           <CheckoutForm order={order} />
         </Elements>
-
-        {/* REMOVED CHECKMARK HERE */}
       </div>
     </div>
   );
