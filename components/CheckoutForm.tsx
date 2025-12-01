@@ -28,16 +28,14 @@ export default function CheckoutForm({ order }: { order: any }) {
   const stripe = useStripe();
   const elements = useElements();
 
-  // FIX: brand stored without triggering rerenders
   const brandRef = useRef("unknown");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [, forceRerender] = useState({}); // used once to update icon ONCE at mount
+  const [, forceRerender] = useState({});
 
   const handleCardBrand = (event: any) => {
     brandRef.current = event.brand || "unknown";
-    forceRerender({}); // rerender ONCE, not constantly
+    forceRerender({});
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +55,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-      // CREATE PAYMENT INTENT
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -70,22 +67,23 @@ export default function CheckoutForm({ order }: { order: any }) {
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
-      if (!stripe || !elements)
-        throw new Error("Stripe is not ready.");
+      const numberEl = elements?.getElement(CardNumberElement);
+      if (!stripe || !elements || !numberEl)
+        throw new Error("Stripe not ready.");
 
       /** --------------------------------------------------
-       * FIXED: PROPER Stripe confirmPayment (NO REST CALL)
-       * stops 401 + lag + pk_test errors
+       * FINAL STRIPE-CORRECT METHOD
+       * Card Elements → confirmCardPayment()
        ---------------------------------------------------- */
-      const result = await stripe.confirmPayment({
-        elements: elements!, // TS fix
-        clientSecret,
-        confirmParams: {
-          return_url: "https://checkout.yesviral.com/checkout/success",
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: numberEl,
         },
+        return_url: "https://checkout.yesviral.com/checkout/success",
       });
 
       if (result.error) throw new Error(result.error.message);
+
     } catch (err: any) {
       setError(err.message);
     }
