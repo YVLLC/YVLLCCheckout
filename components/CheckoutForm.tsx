@@ -1,53 +1,39 @@
 import { useState } from "react";
 import {
-  CardNumberElement,
-  CardExpiryElement,
-  CardCvcElement,
+  PaymentElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
 import { CheckCircle } from "lucide-react";
 
-const cardStyle = {
-  style: {
-    base: {
-      fontSize: "18px",
-      fontWeight: 600,
-      color: "#111",
-      fontFamily: "Inter, system-ui, -apple-system",
-      "::placeholder": { color: "#9BB3DA" },
-    },
-    invalid: {
-      color: "#EF4444",
-      iconColor: "#EF4444",
-    },
-  },
-};
-
 export default function CheckoutForm({ order }: { order: any }) {
   const stripe = useStripe();
   const elements = useElements();
 
-  const [brand, setBrand] = useState("unknown");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCardBrand = (event: any) => {
-    setBrand(event.brand || "unknown");
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    if (!stripe || !elements) {
+      setError("Stripe is not ready yet.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
+      // 1. CREATE PaymentIntent on the server
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
           service: order.service,
           quantity: order.amount,
           reference: order.reference,
+          total: order.total,
+          email: order.email,
         })
       );
 
@@ -63,24 +49,24 @@ export default function CheckoutForm({ order }: { order: any }) {
       const { clientSecret, error: serverErr } = await res.json();
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
-      const numberEl = elements?.getElement(CardNumberElement);
-      if (!stripe || !numberEl) throw new Error("Stripe not ready.");
-
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card: numberEl },
+      // 2. CONFIRM payment using Stripe.js (not REST API!)
+      const result = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: {
+          return_url: "https://checkout.yesviral.com/checkout/success",
+        },
       });
 
-      if (result.error) throw new Error(result.error.message);
-
-      window.location.href = "/checkout/success";
+      if (result.error) {
+        setError(result.error.message || "Payment failed.");
+      }
     } catch (err: any) {
       setError(err.message);
     }
 
     setLoading(false);
   };
-
-  const brandIcon = `/card-brands/${brand}.svg`;
 
   return (
     <form
@@ -116,41 +102,10 @@ export default function CheckoutForm({ order }: { order: any }) {
         "
       >
         <label className="text-sm font-bold text-[#005FCC] uppercase">
-          Card Information
+          Payment Details
         </label>
 
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 rounded-lg bg-white border border-[#DCE8FF] flex items-center justify-center shadow-sm">
-            <img
-              src={brandIcon}
-              className="w-7 h-7 object-contain drop-shadow-sm opacity-90"
-              alt={brand}
-            />
-          </div>
-
-          <span className="text-sm text-[#6B7280] font-semibold tracking-wide">
-            {brand === "unknown" ? "Enter card number" : brand.toUpperCase()}
-          </span>
-        </div>
-
-        <div className="ys-card-box">
-          <CardNumberElement options={cardStyle} onChange={handleCardBrand} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="ys-card-box">
-            <CardExpiryElement options={cardStyle} />
-          </div>
-          <div className="ys-card-box">
-            <CardCvcElement options={cardStyle} />
-          </div>
-        </div>
-
-        {/* Trust Badge */}
-        <div className="flex items-center justify-center gap-2 text-xs text-[#6B7280] pt-1">
-          <div className="w-2.5 h-2.5 bg-[#22C55E] rounded-full shadow-[0_0_5px_#22C55E]" />
-          Verified Safe Checkout • SSL Encrypted Transaction
-        </div>
+        <PaymentElement />
       </div>
 
       {/* ERROR */}
@@ -162,7 +117,7 @@ export default function CheckoutForm({ order }: { order: any }) {
 
       {/* PAY BUTTON */}
       <button
-        disabled={loading}
+        disabled={loading || !stripe || !elements}
         className="
           w-full py-4 rounded-xl text-white font-bold text-lg
           bg-gradient-to-r from-[#007BFF] to-[#005FCC]
@@ -175,7 +130,6 @@ export default function CheckoutForm({ order }: { order: any }) {
 
       {/* LEGAL + GUARANTEE */}
       <div className="space-y-3 mt-1">
-
         <div className="text-[11px] leading-relaxed text-center text-[#6B7280] px-2">
           By completing your purchase, you agree to our{" "}
           <a
@@ -190,39 +144,22 @@ export default function CheckoutForm({ order }: { order: any }) {
             className="text-[#007BFF] underline hover:text-[#005FCC] transition"
           >
             Privacy Policy
-          </a>
-          {" "}and{" "}
+          </a>{" "}
+          and{" "}
           <a
-            href="https://yesviral.com/terms"
+            href="https://yesviral.com/refunds"
             className="text-[#007BFF] underline hover:text-[#005FCC] transition"
           >
             Refund Policy
           </a>
           .
-          <br />
-          Orders begin processing instantly. Delivery varies by platform.
         </div>
 
-        {/* CHECKMARK + GUARANTEE */}
         <div className="flex items-center justify-center gap-2 text-[11px] font-semibold text-[#4B5563] mt-1">
           <CheckCircle size={13} className="text-[#22C55E]" />
           <span>30-Day Refill Guarantee • 24/7 Priority Support</span>
         </div>
       </div>
-
-      <style jsx>{`
-        .ys-card-box {
-          background: white;
-          border: 1px solid #cfe4ff;
-          padding: 14px 18px;
-          border-radius: 14px;
-          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04);
-        }
-        .ys-card-box:focus-within {
-          border-color: #007bff;
-          box-shadow: 0 0 0 4px #e6f0ff;
-        }
-      `}</style>
     </form>
   );
 }
