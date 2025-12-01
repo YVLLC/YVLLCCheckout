@@ -7,6 +7,7 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
+import { supabase } from "@/lib/supabase"; // ✅ ADDED
 
 const cardStyle = {
   style: {
@@ -55,20 +56,27 @@ export default function CheckoutForm({ order }: { order: any }) {
         JSON.stringify({
           platform: order.platform,
           service: order.service,
-          quantity: order.amount, // 👈 this is what webhook will read
+          quantity: order.amount, 
           reference: order.reference,
           total: order.total,
           email: order.email || "",
         })
       );
 
-      // 🔹 Create PaymentIntent via your backend
+      // ⭐ NEW — Get logged-in Supabase user
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id || "";
+
+      // 🔹 Create PaymentIntent via backend
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: Math.round(order.total * 100),
-          metadata: { yesviral_order: encodedMeta },
+          metadata: { 
+            yesviral_order: encodedMeta,
+            user_id: userId, // ⭐ CRITICAL FIX
+          },
           email: order.email || null,
         }),
       });
@@ -82,7 +90,7 @@ export default function CheckoutForm({ order }: { order: any }) {
       const cardElement = elements.getElement(CardNumberElement);
       if (!cardElement) throw new Error("Card input not found.");
 
-      // 🔹 Confirm payment on frontend
+      // 🔹 Confirm payment
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
@@ -96,7 +104,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         throw new Error(result.error.message || "Payment failed.");
       }
 
-      // 🔹 If Stripe says succeeded → FORCE redirect
+      // 🔹 If succeeded → redirect
       if (result.paymentIntent?.status === "succeeded") {
         const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
           order.platform
@@ -112,7 +120,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         return;
       }
 
-      // Any weird status:
       throw new Error(
         `Payment status: ${result.paymentIntent?.status || "unknown"}. If you were charged, contact support.`
       );
