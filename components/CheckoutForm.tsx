@@ -53,6 +53,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
+      // CREATE PAYMENT INTENT
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,15 +67,16 @@ export default function CheckoutForm({ order }: { order: any }) {
       if (!clientSecret) throw new Error(serverErr || "Payment failed.");
 
       const numberEl = elements?.getElement(CardNumberElement);
-      if (!stripe || !numberEl) throw new Error("Stripe not ready.");
+      if (!stripe || !elements || !numberEl)
+        throw new Error("Stripe not ready.");
 
       /** --------------------------------------------------
-       *  FIXED: PROPER CONFIRM METHOD
-       *  This prevents Stripe from doing REST calls with pk_test
-       *  and stops ALL 401 Invalid API Key errors.
+       * FIXED: PROPER CONFIRM METHOD + TS FIX
+       * prevents browser hitting Stripe REST with pk_test
+       * fixes 401, fixes TypeScript error
        ---------------------------------------------------- */
       const result = await stripe.confirmPayment({
-        elements,
+        elements: elements!, // FIX: TS non-null assertion
         clientSecret,
         confirmParams: {
           return_url: "https://checkout.yesviral.com/checkout/success",
