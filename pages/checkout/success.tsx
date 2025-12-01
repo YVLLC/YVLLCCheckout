@@ -5,38 +5,25 @@ export default function SuccessPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
-  // Wait for router.query to be ready (fixes hydration issues)
+  // Ensure router.query is ready
   useEffect(() => {
     if (router.isReady) setReady(true);
   }, [router.isReady]);
 
-  // Extract real order data safely
+  // Extract parameters (support both "reference" and "ref")
   const platform = ready ? (router.query.platform as string) || "—" : "Loading...";
   const service = ready ? (router.query.service as string) || "—" : "Loading...";
   const quantity = ready ? (router.query.quantity as string) || "—" : "Loading...";
   const total = ready ? (router.query.total as string) || "—" : "Loading...";
-  const reference = ready ? (router.query.reference as string) || "—" : "Loading...";
 
-  const [countdown, setCountdown] = useState(7);
+  // ⭐ FIX: Always grab correct reference key (ref or reference)
+  const reference = ready
+    ? (router.query.reference as string) ||
+      (router.query.ref as string) ||
+      "—"
+    : "Loading...";
 
-  // Auto redirect countdown
-  useEffect(() => {
-    if (!ready) return;
-
-    const interval = setInterval(() => {
-      setCountdown((c) => {
-        if (c === 1) {
-          window.location.href = "/";
-          return 1;
-        }
-        return c - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [ready]);
-
-  // One-time confetti
+  // Confetti on load
   useEffect(() => {
     if (!ready) return;
 
@@ -44,8 +31,6 @@ export default function SuccessPage() {
       const duration = 1800;
       const end = Date.now() + duration;
       (function frame() {
-        if (typeof window === "undefined") return;
-
         const colors = ["#007BFF", "#00F2EA", "#FF0000", "#22C55E", "#FACC15"];
         for (let i = 0; i < 30; i++) {
           const div = document.createElement("div");
@@ -88,7 +73,8 @@ export default function SuccessPage() {
       </div>
 
       {/* Main Card */}
-      <div className="
+      <div
+        className="
           relative w-full max-w-xl
           bg-white/80 backdrop-blur-2xl
           border border-[#DCE8FF]
@@ -97,17 +83,8 @@ export default function SuccessPage() {
           animate-fadeIn
         "
       >
-
-        {/* Glow */}
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2">
-          <div className="w-40 h-40 bg-[#007BFF]/20 rounded-full blur-3xl"></div>
-        </div>
-
-        {/* Icon */}
+        {/* Success Icon */}
         <div className="relative mx-auto mb-8 w-24 h-24 rounded-3xl bg-[#22C55E]/10 border border-[#22C55E]/20 flex items-center justify-center shadow-[0_15px_40px_rgba(34,197,94,0.35)]">
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-300 rounded-full animate-ping opacity-60" />
-          <div className="absolute -bottom-2 -left-1 w-3 h-3 bg-blue-300 rounded-full animate-pulse opacity-80" />
-
           <svg
             className="w-14 h-14 text-[#22C55E]"
             fill="none"
@@ -129,7 +106,7 @@ export default function SuccessPage() {
           You’ll receive updates shortly.
         </p>
 
-        {/* REAL ORDER SUMMARY */}
+        {/* Order Summary */}
         <div className="mt-10 bg-white/70 border border-[#CFE4FF] rounded-2xl shadow-[0_8px_30px_rgba(0,123,255,0.07)] p-6 text-left">
           <h3 className="text-[#007BFF] text-xl font-extrabold mb-4">
             Order Summary
@@ -140,22 +117,29 @@ export default function SuccessPage() {
               <span>Platform</span>
               <span className="font-semibold">{platform}</span>
             </div>
+
             <div className="flex justify-between">
               <span>Service</span>
               <span className="font-semibold">{service}</span>
             </div>
+
             <div className="flex justify-between">
               <span>Quantity</span>
               <span className="font-semibold">{quantity}</span>
             </div>
+
             <div className="flex justify-between">
               <span>Target</span>
-              <span className="font-semibold truncate max-w-[55%]">{reference}</span>
+              <span className="font-semibold truncate max-w-[55%]">
+                {reference}
+              </span>
             </div>
+
             <div className="flex justify-between">
               <span>Total Paid</span>
               <span className="font-semibold">${total}</span>
             </div>
+
             <div className="flex justify-between">
               <span>Status</span>
               <span className="text-[#22C55E] font-semibold">Processing</span>
@@ -170,7 +154,7 @@ export default function SuccessPage() {
         {/* Buttons */}
         <div className="mt-10 flex flex-col gap-4 items-center">
           <a
-            href="/track-order"
+            href="https://www.yesviral.com/track-order"
             className="
               w-full py-4 rounded-xl text-white text-lg font-bold
               bg-gradient-to-br from-[#007BFF] to-[#005FCC]
@@ -184,7 +168,7 @@ export default function SuccessPage() {
           </a>
 
           <a
-            href="/"
+            href="https://www.yesviral.com"
             className="
               w-full py-4 rounded-xl font-bold text-lg
               text-[#007BFF] bg-white border border-[#CFE4FF]
@@ -194,10 +178,6 @@ export default function SuccessPage() {
           >
             Return Home
           </a>
-
-          <p className="text-xs text-[#94A3B8] mt-1">
-            Redirecting you in {countdown} seconds…
-          </p>
         </div>
       </div>
 
@@ -206,7 +186,6 @@ export default function SuccessPage() {
         .confetti-piece {
           position: fixed;
           top: -10px;
-          left: ${Math.random() * 100}%;
           width: 8px;
           height: 8px;
           border-radius: 2px;
@@ -221,23 +200,20 @@ export default function SuccessPage() {
           }
         }
 
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-12px); }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+        }
+
         @keyframes fadeIn {
           0% { opacity: 0; transform: translateY(20px); }
           100% { opacity: 1; transform: translateY(0); }
         }
-
         .animate-fadeIn {
           animation: fadeIn 0.8s ease-out forwards;
-        }
-
-        @keyframes float {
-          0% { transform: translateY(0); }
-          50% { transform: translateY(-12px); }
-          100% { transform: translateY(0); }
-        }
-
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
         }
       `}</style>
     </div>
