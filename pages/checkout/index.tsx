@@ -1,3 +1,5 @@
+// checkout/pages/checkout/index.tsx
+
 import { useEffect, useState } from "react";
 import CheckoutForm from "../../components/CheckoutForm";
 import { Elements } from "@stripe/react-stripe-js";
@@ -5,14 +7,17 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Lock } from "lucide-react";
 
 const stripePromise = loadStripe(
-  "pk_test_51Rgpc4Dtq312KvGPUkyCKLxH4ZdPWeJlmBAnMrSlAl5BHF8Wu8qFW6hqxKlo3l7F87X3qmvVnmDrZYcP3FSSTPVN00fygC8Pfl"
+  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string
 );
 
 function getOrderFromURL() {
   if (typeof window === "undefined") return null;
+
   const params = new URLSearchParams(window.location.search);
   const raw = params.get("order");
+
   if (!raw) return null;
+
   try {
     return JSON.parse(decodeURIComponent(escape(atob(raw))));
   } catch {
@@ -24,13 +29,13 @@ export default function CheckoutPage() {
   const [order, setOrder] = useState<any>(null);
   const [clientSecret, setClientSecret] = useState<string>("");
 
+  // Load order + create PaymentIntent
   useEffect(() => {
     const o = getOrderFromURL();
     setOrder(o);
 
     if (!o) return;
 
-    // CREATE PAYMENT INTENT FIRST → Stripe requires this BEFORE Elements
     fetch("/api/payment_intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,10 +48,15 @@ export default function CheckoutPage() {
     })
       .then((res) => res.json())
       .then((data) => {
-        if (data.clientSecret) setClientSecret(data.clientSecret);
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+        } else {
+          console.error("❌ No clientSecret returned:", data);
+        }
       });
   }, []);
 
+  // No order loaded = direct visit
   if (!order) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -60,7 +70,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // WAIT until we have the clientSecret BEFORE rendering Elements
+  // Wait for clientSecret BEFORE mounting Elements
   if (!clientSecret) {
     return (
       <div className="min-h-screen flex items-center justify-center text-[#111]">
@@ -91,12 +101,14 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* CHECKOUT FORM — NOW WITH CLIENT SECRET */}
+        {/* STRIPE ELEMENTS */}
         <Elements
           stripe={stripePromise}
           options={{
             clientSecret,
-            appearance: { theme: "stripe" },
+            appearance: {
+              theme: "stripe",
+            },
           }}
         >
           <CheckoutForm order={order} />
