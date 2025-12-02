@@ -7,7 +7,7 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
-import { supabase } from "@/lib/supabase"; // ✅ ADDED
+import { supabase } from "@/lib/supabase";
 
 const cardStyle = {
   style: {
@@ -51,33 +51,34 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(true);
 
     try {
-      // 🔹 Encode order metadata for webhook / Followiz
+      // ⭐ FIXED: correct quantity (was wrong before)
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
           service: order.service,
-          quantity: order.amount, 
+          quantity: order.quantity, // ✅ FIXED
           reference: order.reference,
           total: order.total,
           email: order.email || "",
         })
       );
 
-      // ⭐ NEW — Get logged-in Supabase user
+      // ⭐ Get logged-in Supabase user
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData?.user?.id || "";
 
-      // 🔹 Create PaymentIntent via backend
+      // 🔹 Create PaymentIntent on backend
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: Math.round(order.total * 100),
-          metadata: { 
+          metadata: {
             yesviral_order: encodedMeta,
             user_id: userId, // ⭐ CRITICAL FIX
           },
           email: order.email || null,
+          user_id: userId,
         }),
       });
 
@@ -90,7 +91,7 @@ export default function CheckoutForm({ order }: { order: any }) {
       const cardElement = elements.getElement(CardNumberElement);
       if (!cardElement) throw new Error("Card input not found.");
 
-      // 🔹 Confirm payment
+      // Confirm payment
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
@@ -104,14 +105,14 @@ export default function CheckoutForm({ order }: { order: any }) {
         throw new Error(result.error.message || "Payment failed.");
       }
 
-      // 🔹 If succeeded → redirect
+      // Success → redirect
       if (result.paymentIntent?.status === "succeeded") {
         const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
           order.platform
         )}&service=${encodeURIComponent(
           order.service
         )}&quantity=${encodeURIComponent(
-          order.amount
+          order.quantity
         )}&total=${encodeURIComponent(order.total)}&ref=${encodeURIComponent(
           order.reference
         )}`;
@@ -148,7 +149,7 @@ export default function CheckoutForm({ order }: { order: any }) {
 
         <SummaryRow label="Package" value={order.package || order.service} />
         <SummaryRow label="Platform" value={order.platform} />
-        <SummaryRow label="Amount" value={order.amount.toLocaleString()} />
+        <SummaryRow label="Amount" value={order.quantity.toLocaleString()} />
         <SummaryRow label="Username / Link" value={order.reference} />
 
         <div className="flex justify-between text-lg font-black border-t pt-3 border-[#E4EEFF]">

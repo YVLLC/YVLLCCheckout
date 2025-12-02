@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { supabase } from "@/lib/supabase"; // ⭐ ADDED
 
 export default function SuccessPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
+
+  // ⭐ NEW: Live order fetched from Supabase
+  const [latestOrder, setLatestOrder] = useState<any>(null);
 
   // Ensure router.query is ready
   useEffect(() => {
@@ -16,14 +20,51 @@ export default function SuccessPage() {
   const quantity = ready ? (router.query.quantity as string) || "—" : "Loading...";
   const total = ready ? (router.query.total as string) || "—" : "Loading...";
 
-  // ⭐ FIX: Always grab correct reference key (ref or reference)
   const reference = ready
     ? (router.query.reference as string) ||
       (router.query.ref as string) ||
       "—"
     : "Loading...";
 
-  // Confetti on load
+  // ⭐ NEW: Load latest order for logged-in user OR fallback to last created order
+  useEffect(() => {
+    if (!ready) return;
+
+    async function load() {
+      // 1️⃣ Try to load logged-in user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      let orderRes;
+
+      if (user?.id) {
+        // User logged in → fetch their most recent order
+        orderRes = await supabase
+          .from("orders")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+      } else {
+        // User NOT logged in → fallback: get most recent global order created in last 2 minutes
+        orderRes = await supabase
+          .from("orders")
+          .select("*")
+          .gte("created_at", new Date(Date.now() - 2 * 60000).toISOString())
+          .order("created_at", { ascending: false })
+          .limit(1);
+      }
+
+      if (orderRes.data && orderRes.data.length > 0) {
+        setLatestOrder(orderRes.data[0]);
+      }
+    }
+
+    load();
+  }, [ready]);
+
+  // Confetti effect
   useEffect(() => {
     if (!ready) return;
 
@@ -53,6 +94,9 @@ export default function SuccessPage() {
       </div>
     );
   }
+
+  // ⭐ Extract Followiz Order ID
+  const followizOrder = latestOrder?.followiz_order_id || "Pending…";
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#EEF6FF] to-[#F7FAFD] flex items-center justify-center px-4 py-16 overflow-hidden">
@@ -144,6 +188,14 @@ export default function SuccessPage() {
               <span>Status</span>
               <span className="text-[#22C55E] font-semibold">Processing</span>
             </div>
+
+            {/* ⭐ NEW → Followiz Order Number */}
+            <div className="flex justify-between mt-4 pt-3 border-t">
+              <span>Order Number</span>
+              <span className="font-bold text-[#007BFF]">
+                {followizOrder}
+              </span>
+            </div>
           </div>
 
           <div className="mt-4 text-xs text-[#94A3B8] text-right">
@@ -154,7 +206,11 @@ export default function SuccessPage() {
         {/* Buttons */}
         <div className="mt-10 flex flex-col gap-4 items-center">
           <a
-            href="https://www.yesviral.com/track-order"
+            href={
+              followizOrder !== "Pending…" 
+                ? `https://www.yesviral.com/track-order?orderId=${followizOrder}`
+                : "https://www.yesviral.com/track-order"
+            }
             className="
               w-full py-4 rounded-xl text-white text-lg font-bold
               bg-gradient-to-br from-[#007BFF] to-[#005FCC]
@@ -164,7 +220,9 @@ export default function SuccessPage() {
               transition-all
             "
           >
-            Track Your Order
+            {followizOrder !== "Pending…"
+              ? "Track Your Order"
+              : "Track Order (Pending…)"}
           </a>
 
           <a
