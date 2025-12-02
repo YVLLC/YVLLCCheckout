@@ -5,16 +5,22 @@ export const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   {
     auth: {
-      autoRefreshToken: true,
       persistSession: true,
+      autoRefreshToken: true,
       detectSessionInUrl: true,
+      flowType: "pkce",  // recommended for browser auth
     },
     global: {
-      cookies: {
-        domain: ".yesviral.com", // ⭐ FIX: share login across subdomains
-        sameSite: "lax",
-        secure: true,
+      headers: {
+        "x-client-info": "yesviral-app",
       },
+    },
+    cookies: {
+      name: "supabase-auth",
+      domain: ".yesviral.com", // ⭐ FIX: share login across ALL subdomains
+      sameSite: "lax",
+      secure: true,
+      path: "/",
     },
   }
 );
