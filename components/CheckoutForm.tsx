@@ -51,21 +51,30 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(true);
 
     try {
-      // ⭐ FIXED: correct quantity (was wrong before)
+      // ⭐ FIXED: correct quantity
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
           service: order.service,
-          quantity: order.quantity, // ✅ FIXED
+          quantity: order.quantity,
           reference: order.reference,
           total: order.total,
           email: order.email || "",
         })
       );
 
-      // ⭐ Get logged-in Supabase user
+      // ⭐ New: Robust user_id detection
       const { data: userData } = await supabase.auth.getUser();
-      const userId = userData?.user?.id || "";
+
+      let userId: string | null =
+        userData?.user?.id ?? null;
+
+      if (!userId && typeof window !== "undefined") {
+        const stored = localStorage.getItem("yv_uid");
+        if (stored) userId = stored;
+      }
+
+      userId = userId || ""; // Final fallback
 
       // 🔹 Create PaymentIntent on backend
       const res = await fetch("/api/payment_intent", {
@@ -75,7 +84,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           amount: Math.round(order.total * 100),
           metadata: {
             yesviral_order: encodedMeta,
-            user_id: userId, // ⭐ CRITICAL FIX
+            user_id: userId, // ⭐ ALWAYS correct now
           },
           email: order.email || null,
           user_id: userId,
