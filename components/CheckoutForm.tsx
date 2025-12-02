@@ -7,7 +7,7 @@ import {
   CardExpiryElement,
   CardCvcElement,
 } from "@stripe/react-stripe-js";
-import { supabase } from "lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 const cardStyle = {
   style: {
