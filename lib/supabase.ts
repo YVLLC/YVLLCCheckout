@@ -8,8 +8,10 @@ export const supabase = createClient(
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      cookieOptions: {
-        domain: ".yesviral.com",   // ⭐ THIS IS THE FIX
+    },
+    global: {
+      cookies: {
+        domain: ".yesviral.com", // ⭐ FIX: share login across subdomains
         sameSite: "lax",
         secure: true,
       },
