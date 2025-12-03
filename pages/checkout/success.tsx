@@ -49,18 +49,27 @@ export default function SuccessPage() {
     load();
   }, [ready]);
 
-  // Refill info
-  const refillUntil = latestOrder?.refill_until
-    ? new Date(latestOrder.refill_until)
-    : null;
-
+  // ➤ REFILL: 30 days from created_at
+  let refillDate: string | null = null;
   let refillDaysLeft: number | null = null;
-  if (refillUntil) {
-    const diff = refillUntil.getTime() - Date.now();
-    refillDaysLeft = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+
+  if (latestOrder?.created_at) {
+    const created = new Date(latestOrder.created_at);
+    const refillEnd = new Date(created.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    refillDate = refillEnd.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    refillDaysLeft = Math.max(
+      0,
+      Math.ceil((refillEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    );
   }
 
-  // Confetti
+  // Confetti effect
   useEffect(() => {
     if (!ready) return;
     const confetti = () => {
@@ -107,7 +116,7 @@ export default function SuccessPage() {
         ))}
       </div>
 
-      {/* Main card */}
+      {/* Main success card */}
       <div className="
         relative w-full max-w-2xl
         bg-white/80 backdrop-blur-2xl
@@ -117,7 +126,7 @@ export default function SuccessPage() {
         animate-fadeIn
       ">
 
-        {/* Check Icon */}
+        {/* Green Check Icon */}
         <div className="mx-auto mb-8 w-24 h-24 flex items-center justify-center bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-3xl shadow-[0_15px_40px_rgba(34,197,94,0.4)]">
           <svg
             className="w-14 h-14 text-[#22C55E]"
@@ -161,6 +170,7 @@ export default function SuccessPage() {
               <span>{quantity}</span>
             </div>
 
+            {/* FIXED LABEL */}
             <div className="flex justify-between">
               <span>Username / Link</span>
               <span className="truncate max-w-[55%]">{reference}</span>
@@ -176,16 +186,12 @@ export default function SuccessPage() {
               <span className="text-[#22C55E]">Processing</span>
             </div>
 
-            {refillUntil && (
+            {/* REFILL BLOCK (NEW) */}
+            {refillDate && (
               <div className="flex justify-between pt-4 border-t mt-3">
                 <span>Refill Guarantee</span>
                 <span className="text-[#007BFF] font-semibold">
-                  {refillDaysLeft} days left • until{" "}
-                  {refillUntil.toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {refillDaysLeft} days left • until {refillDate}
                 </span>
               </div>
             )}
