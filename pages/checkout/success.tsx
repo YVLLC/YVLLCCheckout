@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabase";
 export default function SuccessPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [latestOrder, setLatestOrder] = useState<any>(null);
 
   useEffect(() => {
     if (router.isReady) setReady(true);
@@ -19,54 +18,17 @@ export default function SuccessPage() {
     ? (router.query.reference as string) || (router.query.ref as string) || "—"
     : "Loading...";
 
-  // Load latest order
-  useEffect(() => {
-    if (!ready) return;
+  // ⭐ ALWAYS SHOW 30-DAY REFILL BASED ON TODAY
+  const today = new Date();
+  const endDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
+  const refillDate = endDate.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
-      let orderRes;
-      if (user?.id) {
-        orderRes = await supabase
-          .from("orders")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1);
-      } else {
-        orderRes = await supabase
-          .from("orders")
-          .select("*")
-          .gte("created_at", new Date(Date.now() - 2 * 60000).toISOString())
-          .order("created_at", { ascending: false })
-          .limit(1);
-      }
-
-      if (orderRes.data?.length > 0) setLatestOrder(orderRes.data[0]);
-    }
-
-    load();
-  }, [ready]);
-
-  // ⭐ ALWAYS show 30-day refill based on created_at
-  let refillDate = null;
-  let refillDaysLeft = null;
-
-  if (latestOrder?.created_at) {
-    const createdDate = new Date(latestOrder.created_at);
-    const endDate = new Date(createdDate.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-    refillDate = endDate.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-    refillDaysLeft = Math.ceil(
-      (endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
-  }
+  const refillDaysLeft = 30;
 
   // Confetti
   useEffect(() => {
@@ -125,7 +87,7 @@ export default function SuccessPage() {
         animate-fadeIn
       ">
 
-        {/* Green Check Icon */}
+        {/* Check Icon */}
         <div className="mx-auto mb-8 w-24 h-24 flex items-center justify-center bg-[#22C55E]/10 border border-[#22C55E]/20 rounded-3xl shadow-[0_15px_40px_rgba(34,197,94,0.4)]">
           <svg
             className="w-14 h-14 text-[#22C55E]"
@@ -154,6 +116,7 @@ export default function SuccessPage() {
           </h3>
 
           <div className="space-y-3 text-sm font-semibold text-[#374151]">
+            
             <div className="flex justify-between">
               <span>Platform</span>
               <span>{platform}</span>
@@ -169,7 +132,6 @@ export default function SuccessPage() {
               <span>{quantity}</span>
             </div>
 
-            {/* FIXED LABEL */}
             <div className="flex justify-between">
               <span>Username / Link</span>
               <span className="truncate max-w-[55%]">{reference}</span>
@@ -185,15 +147,13 @@ export default function SuccessPage() {
               <span className="text-[#22C55E]">Processing</span>
             </div>
 
-            {/* ⭐ REFILL ALWAYS SHOWN IF order has created_at */}
-            {refillDate && (
-              <div className="flex justify-between pt-4 border-t mt-3">
-                <span>Refill Guarantee</span>
-                <span className="text-[#007BFF] font-semibold">
-                  {refillDaysLeft} days left • until {refillDate}
-                </span>
-              </div>
-            )}
+            {/* ⭐ ALWAYS SHOW 30-DAY REFILL */}
+            <div className="flex justify-between pt-4 border-t mt-3">
+              <span>Refill Guarantee</span>
+              <span className="text-[#007BFF] font-semibold">
+                {refillDaysLeft} days left • until {refillDate}
+              </span>
+            </div>
 
             <div className="flex justify-between pt-4 border-t mt-3">
               <span>Order Number</span>
