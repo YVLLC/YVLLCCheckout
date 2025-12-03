@@ -49,27 +49,26 @@ export default function SuccessPage() {
     load();
   }, [ready]);
 
-  // ➤ REFILL: 30 days from created_at
-  let refillDate: string | null = null;
-  let refillDaysLeft: number | null = null;
+  // ⭐ ALWAYS show 30-day refill based on created_at
+  let refillDate = null;
+  let refillDaysLeft = null;
 
   if (latestOrder?.created_at) {
-    const created = new Date(latestOrder.created_at);
-    const refillEnd = new Date(created.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const createdDate = new Date(latestOrder.created_at);
+    const endDate = new Date(createdDate.getTime() + 30 * 24 * 60 * 60 * 1000);
 
-    refillDate = refillEnd.toLocaleDateString(undefined, {
+    refillDate = endDate.toLocaleDateString(undefined, {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
 
-    refillDaysLeft = Math.max(
-      0,
-      Math.ceil((refillEnd.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    refillDaysLeft = Math.ceil(
+      (endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     );
   }
 
-  // Confetti effect
+  // Confetti
   useEffect(() => {
     if (!ready) return;
     const confetti = () => {
@@ -186,7 +185,7 @@ export default function SuccessPage() {
               <span className="text-[#22C55E]">Processing</span>
             </div>
 
-            {/* REFILL BLOCK (NEW) */}
+            {/* ⭐ REFILL ALWAYS SHOWN IF order has created_at */}
             {refillDate && (
               <div className="flex justify-between pt-4 border-t mt-3">
                 <span>Refill Guarantee</span>
