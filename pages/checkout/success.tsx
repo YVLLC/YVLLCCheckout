@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { supabase } from "@/lib/supabase";
 
 export default function SuccessPage() {
   const router = useRouter();
@@ -116,7 +115,7 @@ export default function SuccessPage() {
           </h3>
 
           <div className="space-y-3 text-sm font-semibold text-[#374151]">
-            
+
             <div className="flex justify-between">
               <span>Platform</span>
               <span>{platform}</span>
@@ -142,22 +141,28 @@ export default function SuccessPage() {
               <span>${total}</span>
             </div>
 
-            <div className="flex justify-between pt-4 border-t mt-3">
-              <span>Order Status</span>
-              <span className="text-[#22C55E]">Processing</span>
-            </div>
+            {/* ⭐ GROUPED STATUS SECTION */}
+            <div className="pt-4 border-t mt-3 space-y-2">
 
-            {/* ⭐ ALWAYS SHOW 30-DAY REFILL */}
-            <div className="flex justify-between pt-4 border-t mt-3">
-              <span>Refill Guarantee</span>
-              <span className="text-[#007BFF] font-semibold">
-                {refillDaysLeft} days left • until {refillDate}
-              </span>
-            </div>
+              <div className="flex justify-between">
+                <span>Order Status</span>
+                <span className="text-[#22C55E]">Processing</span>
+              </div>
 
-            <div className="flex justify-between pt-4 border-t mt-3">
-              <span>Order Number</span>
-              <span className="text-[#007BFF] font-bold">(Full details emailed to you)</span>
+              <div className="flex justify-between">
+                <span>Refill Guarantee</span>
+                <span className="text-[#007BFF] font-semibold">
+                  {refillDaysLeft} days left • until {refillDate}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Order Number</span>
+                <span className="text-[#007BFF] font-bold">
+                  (Full details emailed to you)
+                </span>
+              </div>
+
             </div>
           </div>
         </div>
