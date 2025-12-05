@@ -51,7 +51,6 @@ export default function CheckoutForm({ order }: { order: any }) {
     setLoading(true);
 
     try {
-      // ⭐ FIXED: correct quantity
       const encodedMeta = btoa(
         JSON.stringify({
           platform: order.platform,
@@ -63,20 +62,16 @@ export default function CheckoutForm({ order }: { order: any }) {
         })
       );
 
-      // ⭐ New: Robust user_id detection
       const { data: userData } = await supabase.auth.getUser();
-
-      let userId: string | null =
-        userData?.user?.id ?? null;
+      let userId: string | null = userData?.user?.id ?? null;
 
       if (!userId && typeof window !== "undefined") {
         const stored = localStorage.getItem("yv_uid");
         if (stored) userId = stored;
       }
 
-      userId = userId || ""; // Final fallback
+      userId = userId || "";
 
-      // 🔹 Create PaymentIntent on backend
       const res = await fetch("/api/payment_intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,7 +79,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           amount: Math.round(order.total * 100),
           metadata: {
             yesviral_order: encodedMeta,
-            user_id: userId, // ⭐ ALWAYS correct now
+            user_id: userId,
           },
           email: order.email || null,
           user_id: userId,
@@ -100,13 +95,10 @@ export default function CheckoutForm({ order }: { order: any }) {
       const cardElement = elements.getElement(CardNumberElement);
       if (!cardElement) throw new Error("Card input not found.");
 
-      // Confirm payment
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
           card: cardElement,
-          billing_details: {
-            email: order.email || undefined,
-          },
+          billing_details: { email: order.email || undefined },
         },
       });
 
@@ -114,7 +106,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         throw new Error(result.error.message || "Payment failed.");
       }
 
-      // Success → redirect
       if (result.paymentIntent?.status === "succeeded") {
         const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
           order.platform
@@ -130,9 +121,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         return;
       }
 
-      throw new Error(
-        `Payment status: ${result.paymentIntent?.status || "unknown"}. If you were charged, contact support.`
-      );
+      throw new Error("Payment status unknown. Contact support if charged.");
     } catch (err: any) {
       console.error("Checkout error:", err);
       setError(err.message || "Something went wrong with payment.");
@@ -153,6 +142,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         shadow-[0_20px_80px_rgba(0,123,255,0.15)]
       "
     >
+      {/* SUMMARY */}
       <div className="space-y-3">
         <h3 className="text-xl font-bold text-[#007BFF]">Order Summary</h3>
 
@@ -167,6 +157,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         </div>
       </div>
 
+      {/* CARD BOX */}
       <div
         className="
           bg-[#F9FBFF] border border-[#CFE4FF]
@@ -182,7 +173,7 @@ export default function CheckoutForm({ order }: { order: any }) {
           <div className="w-10 h-10 rounded-lg bg-white border border-[#DCE8FF] flex items-center justify-center shadow-sm">
             <img
               src={brandIcon}
-              className="w-7 h-7 object-contain drop-shadow-sm opacity-90"
+              className="w-7 h-7 object-contain opacity-90 drop-shadow-sm"
               alt={brandRef.current}
             />
           </div>
@@ -230,6 +221,45 @@ export default function CheckoutForm({ order }: { order: any }) {
       >
         {loading ? "Processing..." : "Complete Payment"}
       </button>
+
+      {/* ⭐⭐⭐ ADDED BACK: YESVIRAL BENEFITS SECTION (PREMIUM AF) ⭐⭐⭐ */}
+      <div className="mt-2 grid grid-cols-3 gap-3 text-center text-[11px] font-semibold text-[#555]">
+        <div className="p-2 rounded-lg bg-[#F9FBFF] border border-[#CFE4FF]">
+          ⚡ Instant Start
+        </div>
+        <div className="p-2 rounded-lg bg-[#F9FBFF] border border-[#CFE4FF]">
+          🔒 30-Day Refill Included
+        </div>
+        <div className="p-2 rounded-lg bg-[#F9FBFF] border border-[#CFE4FF]">
+          ⭐ Premium Quality
+        </div>
+      </div>
+
+      {/* ⭐⭐⭐ ADDED BACK: LEGAL TEXT ⭐⭐⭐ */}
+      <p className="text-[11px] text-center text-[#7A8BA3] leading-relaxed mt-1">
+        By completing your purchase, you agree to YesViral’s{" "}
+        <a
+          href="https://yesviral.com/terms"
+          className="text-[#007BFF] underline hover:text-[#005FCC]"
+        >
+          Terms & Conditions
+        </a>
+        ,{" "}
+        <a
+          href="https://yesviral.com/refund-policy"
+          className="text-[#007BFF] underline hover:text-[#005FCC]"
+        >
+          Refund Policy
+        </a>{" "}
+        and{" "}
+        <a
+          href="https://yesviral.com/privacy-policy"
+          className="text-[#007BFF] underline hover:text-[#005FCC]"
+        >
+          Privacy Policy
+        </a>
+        .
+      </p>
 
       <style jsx>{`
         .ys-card-box {
