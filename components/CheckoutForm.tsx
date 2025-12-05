@@ -102,9 +102,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         },
       });
 
-      if (result.error) {
-        throw new Error(result.error.message || "Payment failed.");
-      }
+      if (result.error) throw new Error(result.error.message);
 
       if (result.paymentIntent?.status === "succeeded") {
         const successURL = `https://checkout.yesviral.com/checkout/success?platform=${encodeURIComponent(
@@ -121,7 +119,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         return;
       }
 
-      throw new Error("Payment status unknown. Contact support if charged.");
+      throw new Error("Payment status unknown.");
     } catch (err: any) {
       console.error("Checkout error:", err);
       setError(err.message || "Something went wrong with payment.");
@@ -223,6 +221,32 @@ export default function CheckoutForm({ order }: { order: any }) {
         {loading ? "Processing..." : "Complete Payment"}
       </button>
 
+      {/* ⭐⭐⭐ PROFESSIONAL LEGAL NOTICE ⭐⭐⭐ */}
+      <p className="mt-3 text-center text-[11px] leading-relaxed text-[#6C7A93]">
+        By proceeding with your purchase, you acknowledge and agree to YesViral’s{" "}
+        <a
+          href="https://yesviral.com/terms"
+          className="text-[#007BFF] hover:text-[#005FCC] underline"
+        >
+          Terms & Conditions
+        </a>
+        ,{" "}
+        <a
+          href="https://yesviral.com/refund-policy"
+          className="text-[#007BFF] hover:text-[#005FCC] underline"
+        >
+          Refund Policy
+        </a>{" "}
+        and{" "}
+        <a
+          href="https://yesviral.com/privacy-policy"
+          className="text-[#007BFF] hover:text-[#005FCC] underline"
+        >
+          Privacy Policy
+        </a>
+        .
+      </p>
+
       {/* ⭐⭐⭐ PREMIUM BENEFITS BAR ⭐⭐⭐ */}
       <div
         className="
@@ -251,31 +275,6 @@ export default function CheckoutForm({ order }: { order: any }) {
         />
       </div>
 
-      {/* ⭐⭐⭐ LEGAL DISCLAIMER ⭐⭐⭐ */}
-      <p className="mt-3 text-center text-[11px] leading-relaxed text-[#6C7A93]">
-        By completing your purchase, you agree to YesViral’s{" "}
-        <a
-          href="https://yesviral.com/terms"
-          className="text-[#007BFF] hover:text-[#005FCC] underline"
-        >
-          Terms & Conditions
-        </a>
-        ,{" "}
-        <a
-          href="https://yesviral.com/refund-policy"
-          className="text-[#007BFF] hover:text-[#005FCC] underline"
-        >
-          Refund Policy
-        </a>{" "}
-        and{" "}
-        <a
-          href="https://yesviral.com/privacy-policy"
-          className="text-[#007BFF] hover:text-[#005FCC] underline"
-        >
-          Privacy Policy
-        </a>.
-      </p>
-
       <style jsx>{`
         .ys-card-box {
           background: white;
@@ -303,7 +302,7 @@ function SummaryRow({ label, value }: any) {
 }
 
 /* ===========================================================
-   PREMIUM BENEFIT ITEM COMPONENT (SAFE, VISUAL ONLY)
+   PREMIUM BENEFIT ITEM COMPONENT
 =========================================================== */
 function BenefitItem({
   icon,
