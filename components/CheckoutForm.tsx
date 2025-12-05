@@ -1,5 +1,5 @@
 // components/CheckoutForm.tsx
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import {
   useStripe,
   useElements,
@@ -8,6 +8,18 @@ import {
   CardCvcElement,
 } from "@stripe/react-stripe-js";
 import { supabase } from "@/lib/supabase";
+
+//
+// 🔥 YV RANDOM ORDER ID GENERATOR (6 characters)
+//
+function generateOrderId() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for (let i = 0; i < 6; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
 
 const cardStyle = {
   style: {
@@ -33,6 +45,28 @@ export default function CheckoutForm({ order }: { order: any }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, forceRerender] = useState({});
+
+  //
+  // ⭐⭐⭐ REWRITE URL TO PROFESSIONAL FORMAT ⭐⭐⭐
+  //
+  useEffect(() => {
+    if (!order || typeof window === "undefined") return;
+
+    let sessionId = sessionStorage.getItem("yv_checkout_session");
+
+    if (!sessionId) {
+      sessionId = generateOrderId();
+      sessionStorage.setItem("yv_checkout_session", sessionId);
+    }
+
+    const cleanURL =
+      window.location.origin + `/checkout/YV-${sessionId}`;
+
+    window.history.replaceState({}, document.title, cleanURL);
+  }, [order]);
+  //
+  // END URL REWRITE
+  //
 
   const handleCardBrand = (event: any) => {
     brandRef.current = event.brand || "unknown";
@@ -221,7 +255,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         {loading ? "Processing..." : "Complete Payment"}
       </button>
 
-      {/* ⭐⭐⭐ PROFESSIONAL LEGAL NOTICE ⭐⭐⭐ */}
+      {/* LEGAL */}
       <p className="mt-3 text-center text-[11px] leading-relaxed text-[#6C7A93]">
         By proceeding with your purchase, you acknowledge and agree to YesViral’s{" "}
         <a
@@ -247,7 +281,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         .
       </p>
 
-      {/* ⭐⭐⭐ PREMIUM BENEFITS BAR ⭐⭐⭐ */}
+      {/* BENEFITS BAR */}
       <div
         className="
           mt-4 w-full grid grid-cols-3 gap-3
@@ -301,9 +335,6 @@ function SummaryRow({ label, value }: any) {
   );
 }
 
-/* ===========================================================
-   PREMIUM BENEFIT ITEM COMPONENT
-=========================================================== */
 function BenefitItem({
   icon,
   title,
