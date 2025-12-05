@@ -1,6 +1,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 
+//
+// 🔥 RANDOM YV ORDER ID GENERATOR — SAME AS CHECKOUT
+//
+function generateOrderId() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let out = "";
+  for (let i = 0; i < 6; i++) {
+    out += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return out;
+}
+
 export default function SuccessPage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
@@ -8,6 +20,28 @@ export default function SuccessPage() {
   useEffect(() => {
     if (router.isReady) setReady(true);
   }, [router.isReady]);
+
+  //
+  // ⭐⭐⭐ REWRITE SUCCESS URL: /success/YV-XYZ ⭐⭐⭐
+  //
+  useEffect(() => {
+    if (!router.isReady || typeof window === "undefined") return;
+
+    // Use the same session ID from checkout
+    let sessionId = sessionStorage.getItem("yv_checkout_session");
+    if (!sessionId) {
+      sessionId = generateOrderId();
+      sessionStorage.setItem("yv_checkout_session", sessionId);
+    }
+
+    const cleanURL =
+      window.location.origin + `/success/YV-${sessionId}`;
+
+    window.history.replaceState({}, document.title, cleanURL);
+  }, [router.isReady]);
+  //
+  // END CLEAN URL UPDATE
+  //
 
   const platform = ready ? (router.query.platform as string) || "—" : "Loading...";
   const service = ready ? (router.query.service as string) || "—" : "Loading...";
