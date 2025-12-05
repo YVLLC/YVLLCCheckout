@@ -93,7 +93,7 @@ export default function CheckoutForm({ order }: { order: any }) {
       }
 
       const cardElement = elements.getElement(CardNumberElement);
-      if (!cardElement) throw new Error("Card input not found.");
+      if (!cardElement) throw new Error("Card element not found.");
 
       const result = await stripe.confirmCardPayment(clientSecret, {
         payment_method: {
@@ -142,7 +142,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         shadow-[0_20px_80px_rgba(0,123,255,0.15)]
       "
     >
-      {/* SUMMARY */}
+      {/* ORDER SUMMARY */}
       <div className="space-y-3">
         <h3 className="text-xl font-bold text-[#007BFF]">Order Summary</h3>
 
@@ -157,7 +157,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         </div>
       </div>
 
-      {/* CARD BOX */}
+      {/* PAYMENT FIELDS */}
       <div
         className="
           bg-[#F9FBFF] border border-[#CFE4FF]
@@ -170,10 +170,10 @@ export default function CheckoutForm({ order }: { order: any }) {
         </label>
 
         <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 rounded-lg bg-white border border-[#DCE8FF] flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 rounded-lg bg-white border border-[#DCE8FF] shadow-sm flex items-center justify-center">
             <img
               src={brandIcon}
-              className="w-7 h-7 object-contain opacity-90 drop-shadow-sm"
+              className="w-7 h-7 object-contain drop-shadow-sm opacity-90"
               alt={brandRef.current}
             />
           </div>
@@ -210,6 +210,7 @@ export default function CheckoutForm({ order }: { order: any }) {
         </div>
       )}
 
+      {/* PAYMENT BUTTON */}
       <button
         disabled={loading}
         className="
@@ -222,43 +223,57 @@ export default function CheckoutForm({ order }: { order: any }) {
         {loading ? "Processing..." : "Complete Payment"}
       </button>
 
-      {/* ⭐⭐⭐ ADDED BACK: YESVIRAL BENEFITS SECTION (PREMIUM AF) ⭐⭐⭐ */}
-      <div className="mt-2 grid grid-cols-3 gap-3 text-center text-[11px] font-semibold text-[#555]">
-        <div className="p-2 rounded-lg bg-[#F9FBFF] border border-[#CFE4FF]">
-          ⚡ Instant Start
-        </div>
-        <div className="p-2 rounded-lg bg-[#F9FBFF] border border-[#CFE4FF]">
-          🔒 30-Day Refill Included
-        </div>
-        <div className="p-2 rounded-lg bg-[#F9FBFF] border border-[#CFE4FF]">
-          ⭐ Premium Quality
-        </div>
+      {/* ⭐⭐⭐ PREMIUM BENEFITS BAR ⭐⭐⭐ */}
+      <div
+        className="
+          mt-4 w-full grid grid-cols-3 gap-3
+          bg-gradient-to-br from-white/90 to-[#F3F8FF]
+          backdrop-blur-xl
+          border border-[#D8E6FF]
+          rounded-2xl p-3
+          shadow-[0_12px_45px_rgba(0,123,255,0.12)]
+        "
+      >
+        <BenefitItem
+          icon="⚡"
+          title="Instant Processing"
+          desc="Starts within minutes"
+        />
+        <BenefitItem
+          icon="🔒"
+          title="30-Day Refill"
+          desc="Free protection included"
+        />
+        <BenefitItem
+          icon="⭐"
+          title="Premium Quality"
+          desc="Stable & high-retention"
+        />
       </div>
 
-      {/* ⭐⭐⭐ ADDED BACK: LEGAL TEXT ⭐⭐⭐ */}
-      <p className="text-[11px] text-center text-[#7A8BA3] leading-relaxed mt-1">
+      {/* ⭐⭐⭐ LEGAL DISCLAIMER ⭐⭐⭐ */}
+      <p className="mt-3 text-center text-[11px] leading-relaxed text-[#6C7A93]">
         By completing your purchase, you agree to YesViral’s{" "}
         <a
           href="https://yesviral.com/terms"
-          className="text-[#007BFF] underline hover:text-[#005FCC]"
+          className="text-[#007BFF] hover:text-[#005FCC] underline"
         >
           Terms & Conditions
         </a>
         ,{" "}
         <a
           href="https://yesviral.com/refund-policy"
-          className="text-[#007BFF] underline hover:text-[#005FCC]"
+          className="text-[#007BFF] hover:text-[#005FCC] underline"
         >
           Refund Policy
         </a>{" "}
         and{" "}
         <a
           href="https://yesviral.com/privacy-policy"
-          className="text-[#007BFF] underline hover:text-[#005FCC]"
+          className="text-[#007BFF] hover:text-[#005FCC] underline"
         >
           Privacy Policy
-        </a>
-        .
+        </a>.
       </p>
 
       <style jsx>{`
@@ -283,6 +298,38 @@ function SummaryRow({ label, value }: any) {
     <div className="flex justify-between text-sm text-[#333]">
       <span className="font-medium text-[#6B7A90]">{label}</span>
       <span className="font-semibold">{value}</span>
+    </div>
+  );
+}
+
+/* ===========================================================
+   PREMIUM BENEFIT ITEM COMPONENT (SAFE, VISUAL ONLY)
+=========================================================== */
+function BenefitItem({
+  icon,
+  title,
+  desc,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <div
+      className="
+        flex flex-col items-center text-center px-2
+        hover:scale-[1.05] transition-transform duration-200
+      "
+    >
+      <div className="text-[22px] drop-shadow-[0_2px_6px_rgba(0,123,255,0.25)]">
+        {icon}
+      </div>
+      <span className="text-[11px] font-bold text-[#005FCC] mt-1">
+        {title}
+      </span>
+      <span className="text-[10px] text-[#6B7A90] font-medium leading-tight">
+        {desc}
+      </span>
     </div>
   );
 }
