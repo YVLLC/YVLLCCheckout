@@ -2,6 +2,8 @@ import type { AppProps } from "next/app";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import Script from "next/script";
+import { useRouter } from "next/router";
+import { useEffect } from "react";
 import "../styles/globals.css";
 
 // Load Stripe using your LIVE publishable key
@@ -10,9 +12,27 @@ const stripePromise = loadStripe(
 );
 
 export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+
+  /**
+   * 🔴 Track PageView on route changes (Next.js SPA fix)
+   */
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (typeof window !== "undefined" && (window as any).fbq) {
+        (window as any).fbq("track", "PageView");
+      }
+    };
+
+    router.events.on("routeChangeComplete", handleRouteChange);
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
+
   return (
     <>
-      {/* META PIXEL */}
+      {/* ================= META PIXEL ================= */}
       <Script
         id="meta-pixel"
         strategy="afterInteractive"
@@ -26,11 +46,12 @@ export default function App({ Component, pageProps }: AppProps) {
             t.src=v;s=b.getElementsByTagName(e)[0];
             s.parentNode.insertBefore(t,s)}(window, document,'script',
             'https://connect.facebook.net/en_US/fbevents.js');
-            fbq('init', '841720501970349');
+            fbq('init', '1196656872434686');
             fbq('track', 'PageView');
           `,
         }}
       />
+      {/* ============================================== */}
 
       <Elements stripe={stripePromise}>
         <Component {...pageProps} />
