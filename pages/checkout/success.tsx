@@ -27,16 +27,13 @@ export default function SuccessPage() {
   useEffect(() => {
     if (!router.isReady || typeof window === "undefined") return;
 
-    // Use the same session ID from checkout
     let sessionId = sessionStorage.getItem("yv_checkout_session");
     if (!sessionId) {
       sessionId = generateOrderId();
       sessionStorage.setItem("yv_checkout_session", sessionId);
     }
 
-    const cleanURL =
-      window.location.origin + `/success/YV-${sessionId}`;
-
+    const cleanURL = window.location.origin + `/success/YV-${sessionId}`;
     window.history.replaceState({}, document.title, cleanURL);
   }, [router.isReady]);
   //
@@ -46,9 +43,11 @@ export default function SuccessPage() {
   const platform = ready ? (router.query.platform as string) || "—" : "Loading...";
   const service = ready ? (router.query.service as string) || "—" : "Loading...";
   const quantity = ready ? (router.query.quantity as string) || "—" : "Loading...";
-  const total = ready ? (router.query.total as string) || "—" : "Loading...";
+  const total = ready ? (router.query.total as string) || "0" : "0";
   const reference = ready
-    ? (router.query.reference as string) || (router.query.ref as string) || "—"
+    ? (router.query.reference as string) ||
+      (router.query.ref as string) ||
+      "—"
     : "Loading...";
 
   // ⭐ ALWAYS SHOW 30-DAY REFILL BASED ON TODAY
@@ -63,6 +62,30 @@ export default function SuccessPage() {
 
   const refillDaysLeft = 30;
 
+  //
+  // 🔥 META PURCHASE EVENT — FIRE ONCE
+  //
+  useEffect(() => {
+    if (!ready || typeof window === "undefined") return;
+
+    if (sessionStorage.getItem("yv_purchase_fired")) return;
+
+    const numericTotal = Number(total);
+
+    if (
+      (window as any).fbq &&
+      !isNaN(numericTotal) &&
+      numericTotal > 0
+    ) {
+      (window as any).fbq("track", "Purchase", {
+        value: numericTotal,
+        currency: "USD",
+      });
+
+      sessionStorage.setItem("yv_purchase_fired", "true");
+    }
+  }, [ready, total]);
+
   // Confetti
   useEffect(() => {
     if (!ready) return;
@@ -74,7 +97,8 @@ export default function SuccessPage() {
         for (let i = 0; i < 25; i++) {
           const div = document.createElement("div");
           div.className = "confetti-piece";
-          div.style.background = colors[Math.floor(Math.random() * colors.length)];
+          div.style.background =
+            colors[Math.floor(Math.random() * colors.length)];
           document.body.appendChild(div);
           setTimeout(() => div.remove(), 1500);
         }
@@ -138,8 +162,8 @@ export default function SuccessPage() {
         </h1>
 
         <p className="mt-4 text-[#475569] text-lg font-medium leading-relaxed px-4">
-          Your payment was successful and your order is now being prepared inside our Private Delivery Network.
-          You’ll receive updates shortly.
+          Your payment was successful and your order is now being prepared inside
+          our Private Delivery Network.
         </p>
 
         {/* Order Summary */}
@@ -149,7 +173,6 @@ export default function SuccessPage() {
           </h3>
 
           <div className="space-y-3 text-sm font-semibold text-[#374151]">
-
             <div className="flex justify-between">
               <span>Platform</span>
               <span>{platform}</span>
@@ -175,9 +198,7 @@ export default function SuccessPage() {
               <span>${total}</span>
             </div>
 
-            {/* ⭐ GROUPED STATUS SECTION */}
             <div className="pt-4 border-t mt-3 space-y-2">
-
               <div className="flex justify-between">
                 <span>Order Status</span>
                 <span className="text-[#22C55E]">Processing</span>
@@ -189,83 +210,26 @@ export default function SuccessPage() {
                   {refillDaysLeft} days left • until {refillDate}
                 </span>
               </div>
-
-              <div className="flex justify-between">
-                <span>Order Number</span>
-                <span className="text-[#007BFF] font-bold">
-                  (Full details emailed to you)
-                </span>
-              </div>
-
             </div>
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="mt-10 flex flex-col gap-4">
           <a
             href="https://www.yesviral.com/track-order"
-            className="
-              w-full py-4 rounded-xl text-white text-lg font-bold
-              bg-gradient-to-br from-[#007BFF] to-[#005FCC]
-              shadow-[0_10px_35px_rgba(0,123,255,0.55)]
-              hover:shadow-[0_12px_45px_rgba(0,123,255,0.65)]
-              hover:scale-[1.02] active:scale-[0.97]
-              transition-all
-            "
+            className="w-full py-4 rounded-xl text-white text-lg font-bold bg-gradient-to-br from-[#007BFF] to-[#005FCC]"
           >
             Track Your Order
           </a>
 
           <a
             href="https://www.yesviral.com"
-            className="
-              w-full py-4 rounded-xl font-bold text-lg
-              text-[#007BFF] bg-white border border-[#CFE4FF]
-              hover:bg-[#EDF5FF] hover:border-[#9CCBFF]
-              transition-all
-            "
+            className="w-full py-4 rounded-xl font-bold text-lg text-[#007BFF] bg-white border border-[#CFE4FF]"
           >
             Return Home
           </a>
         </div>
       </div>
-
-      <style jsx>{`
-        .confetti-piece {
-          position: fixed;
-          top: -12px;
-          width: 8px;
-          height: 8px;
-          border-radius: 2px;
-          animation: fall 1.5s linear forwards;
-        }
-
-        @keyframes fall {
-          to {
-            transform: translateY(120vh) rotate(720deg);
-            opacity: 0;
-          }
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-
-        @keyframes fadeIn {
-          0% { opacity: 0; transform: translateY(18px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.7s ease-out forwards;
-        }
-      `}</style>
     </div>
   );
 }
