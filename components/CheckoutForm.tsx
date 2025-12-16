@@ -10,7 +10,7 @@ import {
 import { supabase } from "@/lib/supabase";
 
 //
-// 🔥 YV RANDOM ORDER ID GENERATOR (6 characters)
+// YV RANDOM ORDER ID GENERATOR (6 characters)
 //
 function generateOrderId() {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
