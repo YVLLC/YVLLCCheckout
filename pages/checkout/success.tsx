@@ -63,7 +63,7 @@ export default function SuccessPage() {
 
   const refillDaysLeft = 30;
 
-  // Confetti
+  // 🎉 Confetti
   useEffect(() => {
     if (!ready) return;
     const confetti = () => {
@@ -83,6 +83,18 @@ export default function SuccessPage() {
     };
     confetti();
   }, [ready]);
+
+  // 🔥 META PURCHASE EVENT — SUCCESS PAGE ONLY (ADDED)
+  useEffect(() => {
+    if (!ready || typeof window === "undefined") return;
+
+    if ((window as any).fbq && total && total !== "—") {
+      (window as any).fbq("track", "Purchase", {
+        value: Number(total),
+        currency: "USD",
+      });
+    }
+  }, [ready, total]);
 
   if (!ready) {
     return (
