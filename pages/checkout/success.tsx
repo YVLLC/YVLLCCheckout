@@ -84,15 +84,20 @@ export default function SuccessPage() {
     confetti();
   }, [ready]);
 
-  // 🔥 META PURCHASE EVENT — SUCCESS PAGE ONLY (ADDED)
+  // 🔥 META PURCHASE EVENT — SUCCESS PAGE ONLY (DEDUPED)
   useEffect(() => {
     if (!ready || typeof window === "undefined") return;
+
+    const purchaseKey = "yv_purchase_fired";
+    if (sessionStorage.getItem(purchaseKey)) return;
 
     if ((window as any).fbq && total && total !== "—") {
       (window as any).fbq("track", "Purchase", {
         value: Number(total),
         currency: "USD",
       });
+
+      sessionStorage.setItem(purchaseKey, "1");
     }
   }, [ready, total]);
 
